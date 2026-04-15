@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: claude-pan-proxy-config
+  namespace: default
+  labels:
+    app: claude-pan-proxy
+data:
+  # Palo Alto Networks AI Runtime Security gateway URL
+  # See: https://pan.dev/ai-runtime-security/api/
+  PAN_API_URL: "https://service.api.aisecurity.paloaltonetworks.com"
+
+  # Name tag sent in scan metadata (identifies this app in PAN dashboards)
+  PAN_APP_NAME: "claude-proxy"
+
+  # Timeout in seconds for PAN API calls
+  PAN_TIMEOUT: "10"
+
+  # Set to "true" to also scan Claude's responses (not just prompts)
+  PAN_SCAN_RESPONSES: "false"
+
+  # Claude model to use
+  CLAUDE_MODEL: "claude-haiku-4-5"
+
+  # Log level: DEBUG, INFO, WARNING, ERROR
+  LOG_LEVEL: "INFO"

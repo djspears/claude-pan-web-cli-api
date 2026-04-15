@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: claude-pan-proxy
+  namespace: default
+  labels:
+    app: claude-pan-proxy
+spec:
+  selector:
+    app: claude-pan-proxy
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+  type: ClusterIP
+---
+# Optional: expose externally via LoadBalancer
+# Uncomment and remove the ClusterIP service above if needed.
+#
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: claude-pan-proxy-lb
+#   namespace: default
+# spec:
+#   selector:
+#     app: claude-pan-proxy
+#   ports:
+#     - port: 80
+#       targetPort: http
+#   type: LoadBalancer

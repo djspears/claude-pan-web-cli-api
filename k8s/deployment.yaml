@@ -1,0 +1,133 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: claude-pan-proxy
+  namespace: default
+  labels:
+    app: claude-pan-proxy
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: claude-pan-proxy
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: claude-pan-proxy
+    spec:
+      # Allow ping (cap_net_raw) for the non-root appuser
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 1001
+
+      containers:
+        - name: proxy
+          image: djspears/claude-pan-proxy:latest
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+
+          # Grant cap_net_raw so the non-root user can run ping
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              add:
+                - NET_RAW    # required for ping
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+
+          env:
+            # Secrets
+            - name: ANTHROPIC_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: claude-pan-proxy-secrets
+                  key: ANTHROPIC_API_KEY
+            - name: PAN_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: claude-pan-proxy-secrets
+                  key: PAN_API_KEY
+
+            # ConfigMap values
+            - name: PAN_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: claude-pan-proxy-config
+                  key: PAN_API_URL
+            - name: PAN_APP_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: claude-pan-proxy-config
+                  key: PAN_APP_NAME
+            - name: PAN_PROFILE_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: claude-pan-proxy-secrets
+                  key: PAN_PROFILE_NAME
+            - name: PAN_TIMEOUT
+              valueFrom:
+                configMapKeyRef:
+                  name: claude-pan-proxy-config
+                  key: PAN_TIMEOUT
+            - name: PAN_SCAN_RESPONSES
+              valueFrom:
+                configMapKeyRef:
+                  name: claude-pan-proxy-config
+                  key: PAN_SCAN_RESPONSES
+            - name: CLAUDE_MODEL
+              valueFrom:
+                configMapKeyRef:
+                  name: claude-pan-proxy-config
+                  key: CLAUDE_MODEL
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: claude-pan-proxy-config
+                  key: LOG_LEVEL
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+
+          # Read-only root FS — writable tmp mounts for uvicorn workers
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+
+      volumes:
+        - name: tmp
+          emptyDir: {}
+
+      # Optional: pull from a private registry
+      # imagePullSecrets:
+      #   - name: registry-credentials

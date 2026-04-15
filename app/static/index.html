@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Claude + PAN AI Security</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --surface3: #2a2f47;
+      --border: #2e3250;
+      --accent: #6c63ff;
+      --accent-hover: #857dff;
+      --green: #22c55e;
+      --red: #ef4444;
+      --yellow: #f59e0b;
+      --blue: #3b82f6;
+      --text: #e8eaf0;
+      --text-muted: #7b80a0;
+      --user-bubble: #2d3a6e;
+      --claude-bubble: #1e2235;
+      --radius: 14px;
+      --sidebar-width: 300px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      gap: 12px;
+    }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .logo {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, var(--accent), #a78bfa);
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px; flex-shrink: 0;
+    }
+    .header-title { font-size: 14px; font-weight: 600; }
+    .header-subtitle { font-size: 11px; color: var(--text-muted); }
+    .header-badges { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
+    .badge {
+      display: flex; align-items: center; gap: 5px;
+      padding: 3px 9px; border-radius: 20px;
+      font-size: 11px; font-weight: 500; border: 1px solid transparent;
+      white-space: nowrap;
+    }
+    .badge-model { background: rgba(108,99,255,.15); border-color: rgba(108,99,255,.3); color: #a78bfa; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+    .badge-connected { background: rgba(34,197,94,.12);  border-color: rgba(34,197,94,.3);  color: var(--green); }
+    .badge-disabled   { background: rgba(245,158,11,.12); border-color: rgba(245,158,11,.3); color: var(--yellow); }
+    .badge-error      { background: rgba(239,68,68,.12);  border-color: rgba(239,68,68,.3);  color: var(--red); }
+
+    /* ── PAN status bar ── */
+    #panStatusBar {
+      display: none;
+      padding: 8px 20px;
+      font-size: 12px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    #panStatusBar.visible { display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+    #panStatusBar.status-error    { background: rgba(239,68,68,.08);  border-color: rgba(239,68,68,.25); }
+    #panStatusBar.status-disabled { background: rgba(245,158,11,.08); border-color: rgba(245,158,11,.25); }
+    .status-icon  { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+    .status-body  { display: flex; flex-direction: column; gap: 2px; }
+    .status-title { font-weight: 600; }
+    .status-detail { color: var(--text-muted); font-size: 11px; }
+
+    /* ── Main layout: chat + sidebar ── */
+    .main-area {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* ── Chat ── */
+    #chat {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      scroll-behavior: smooth;
+      min-width: 0;
+    }
+    #chat::-webkit-scrollbar { width: 5px; }
+    #chat::-webkit-scrollbar-track { background: transparent; }
+    #chat::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── Scan results sidebar ── */
+    #scanSidebar {
+      width: var(--sidebar-width);
+      flex-shrink: 0;
+      background: var(--surface);
+      border-left: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .sidebar-header {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .sidebar-header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sidebar-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .scan-count {
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1px 7px;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .sidebar-stats {
+      display: flex;
+      gap: 8px;
+      padding: 8px 14px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .stat-box {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 8px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 18px;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .stat-label {
+      font-size: 9px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      margin-top: 1px;
+    }
+
+    .stat-allow { color: var(--green); }
+    .stat-block { color: var(--red); }
+    .stat-skip  { color: var(--yellow); }
+
+    .sidebar-clear {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 11px;
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: color .15s;
+    }
+    .sidebar-clear:hover { color: var(--text); }
+
+    /* ── Scan list ── */
+    #scanList {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    #scanList::-webkit-scrollbar { width: 4px; }
+    #scanList::-webkit-scrollbar-track { background: transparent; }
+    #scanList::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    .scan-empty {
+      text-align: center;
+      padding: 40px 16px;
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+    .scan-empty-icon { font-size: 28px; margin-bottom: 8px; }
+
+    /* ── Scan entry card ── */
+    .scan-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      animation: fadeUp .2s ease;
+      cursor: pointer;
+      transition: border-color .15s;
+    }
+    .scan-card:hover { border-color: var(--accent); }
+    .scan-card.expanded { border-color: var(--border); }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(5px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .scan-card-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 10px;
+    }
+
+    .scan-verdict-icon {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+    .verdict-allow { background: rgba(34,197,94,.15);  color: var(--green); }
+    .verdict-block { background: rgba(239,68,68,.15);  color: var(--red); }
+    .verdict-skip  { background: rgba(245,158,11,.15); color: var(--yellow); }
+
+    .scan-card-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .scan-card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+      margin-bottom: 2px;
+    }
+
+    .scan-verdict-label {
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .label-allow { color: var(--green); }
+    .label-block { color: var(--red); }
+    .label-skip  { color: var(--yellow); }
+
+    .scan-time {
+      font-size: 10px;
+      color: var(--text-muted);
+      flex-shrink: 0;
+    }
+
+    .scan-prompt-preview {
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .scan-chevron {
+      color: var(--text-muted);
+      font-size: 10px;
+      flex-shrink: 0;
+      transition: transform .2s;
+    }
+    .scan-card.expanded .scan-chevron { transform: rotate(180deg); }
+
+    /* ── Scan detail panel (expanded) ── */
+    .scan-card-detail {
+      display: none;
+      border-top: 1px solid var(--border);
+      padding: 10px;
+      font-size: 11px;
+      background: var(--surface);
+    }
+    .scan-card.expanded .scan-card-detail { display: block; }
+
+    .detail-section-title {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      margin-top: 10px;
+    }
+    .detail-section-title:first-child { margin-top: 0; }
+
+    .detail-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .detail-row {
+      display: flex;
+      gap: 6px;
+      align-items: flex-start;
+    }
+
+    .detail-label {
+      color: var(--text-muted);
+      min-width: 68px;
+      flex-shrink: 0;
+      font-size: 10px;
+      padding-top: 1px;
+    }
+
+    .detail-val {
+      color: var(--text);
+      word-break: break-all;
+      font-size: 11px;
+    }
+    .detail-val.mono  { font-family: monospace; font-size: 10px; color: #a78bfa; }
+    .detail-val.green { color: var(--green); font-weight: 600; }
+    .detail-val.red   { color: var(--red);   font-weight: 600; }
+    .detail-val.yellow{ color: var(--yellow); font-weight: 600; }
+
+    .prompt-full {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 7px 9px;
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      max-height: 80px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin-top: 4px;
+    }
+
+    .raw-toggle {
+      color: var(--accent);
+      cursor: pointer;
+      font-size: 10px;
+      margin-top: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+    .raw-toggle:hover { color: var(--accent-hover); }
+
+    .raw-json {
+      display: none;
+      margin-top: 6px;
+      background: #12141e;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 7px 9px;
+      font-family: monospace;
+      font-size: 10px;
+      color: #a78bfa;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+    .raw-json.open { display: block; }
+
+    /* ── Messages ── */
+    .msg-row {
+      display: flex; gap: 9px;
+      max-width: 720px; width: 100%; margin: 0 auto;
+      animation: fadeUp .18s ease;
+    }
+    .msg-row.user { flex-direction: row-reverse; }
+    .avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      flex-shrink: 0; display: flex; align-items: center;
+      justify-content: center; font-size: 13px; margin-top: 3px;
+    }
+    .avatar-user   { background: linear-gradient(135deg, #6c63ff, #a78bfa); }
+    .avatar-claude { background: linear-gradient(135deg, #1e3a5f, #2563eb); }
+    .bubble-wrap { display: flex; flex-direction: column; gap: 4px; max-width: calc(100% - 42px); }
+    .msg-row.user .bubble-wrap { align-items: flex-end; }
+    .bubble {
+      padding: 11px 14px; border-radius: var(--radius);
+      line-height: 1.65; font-size: 14px; white-space: pre-wrap; word-break: break-word;
+    }
+    .msg-row.user   .bubble { background: var(--user-bubble);  border-bottom-right-radius: 4px; }
+    .msg-row.claude .bubble { background: var(--claude-bubble); border: 1px solid var(--border); border-bottom-left-radius: 4px; }
+
+    .msg-meta {
+      font-size: 11px; color: var(--text-muted);
+      display: flex; align-items: center; gap: 6px; padding: 0 3px;
+    }
+
+    /* ── Typing indicator ── */
+    .typing-row { display: none; }
+    .typing-row.visible { display: flex; }
+    .typing-bubble {
+      background: var(--claude-bubble); border: 1px solid var(--border);
+      border-bottom-left-radius: 4px; padding: 13px 14px;
+      border-radius: var(--radius); display: flex; gap: 4px; align-items: center;
+    }
+    .typing-bubble span {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--text-muted); animation: bounce 1.2s infinite;
+    }
+    .typing-bubble span:nth-child(2) { animation-delay: .2s; }
+    .typing-bubble span:nth-child(3) { animation-delay: .4s; }
+    @keyframes bounce {
+      0%,60%,100% { transform: translateY(0); }
+      30%          { transform: translateY(-5px); }
+    }
+
+    /* ── Welcome ── */
+    .welcome {
+      text-align: center; margin: auto;
+      padding: 36px 20px; max-width: 380px;
+    }
+    .welcome-icon { font-size: 44px; margin-bottom: 14px; }
+    .welcome h2 { font-size: 19px; font-weight: 600; margin-bottom: 7px; }
+    .welcome p { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+    .welcome-features { margin-top: 18px; display: flex; flex-direction: column; gap: 7px; text-align: left; }
+    .feature {
+      display: flex; align-items: center; gap: 9px;
+      padding: 9px 12px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 9px; font-size: 12px; color: var(--text-muted);
+    }
+
+    /* ── Input ── */
+    footer {
+      padding: 10px 16px 12px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    /* toolbar row above the text box */
+    .input-toolbar {
+      max-width: 720px; margin: 0 auto 8px;
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+
+    .session-info {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; color: var(--text-muted);
+      flex: 1; min-width: 0;
+    }
+    .session-label { white-space: nowrap; }
+    .session-id-val {
+      font-family: monospace; font-size: 10px; color: #a78bfa;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: 140px;
+    }
+
+    .new-session-btn {
+      display: flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 8px;
+      background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text-muted); font-size: 11px; cursor: pointer;
+      white-space: nowrap; transition: border-color .15s, color .15s;
+      flex-shrink: 0;
+    }
+    .new-session-btn:hover { border-color: var(--accent); color: var(--text); }
+
+    /* scan history toggle */
+    .scan-mode-toggle {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; color: var(--text-muted);
+      cursor: pointer; user-select: none;
+      padding: 4px 10px; border-radius: 8px;
+      background: var(--surface2); border: 1px solid var(--border);
+      transition: border-color .15s;
+      flex-shrink: 0;
+    }
+    .scan-mode-toggle:hover { border-color: var(--accent); }
+    .scan-mode-toggle input { accent-color: var(--accent); cursor: pointer; }
+    .scan-mode-toggle.active {
+      border-color: rgba(108,99,255,.5);
+      background: rgba(108,99,255,.1);
+      color: #a78bfa;
+    }
+
+    .input-wrap {
+      max-width: 720px; margin: 0 auto;
+      display: flex; gap: 9px; align-items: flex-end;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 9px 11px;
+      transition: border-color .2s;
+    }
+    .input-wrap:focus-within { border-color: var(--accent); }
+    #prompt {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: var(--text); font-size: 14px; line-height: 1.5;
+      resize: none; max-height: 150px; font-family: inherit;
+    }
+    #prompt::placeholder { color: var(--text-muted); }
+    #sendBtn {
+      width: 34px; height: 34px; border-radius: 9px;
+      background: var(--accent); border: none; cursor: pointer;
+      color: white; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: background .15s, transform .1s;
+    }
+    #sendBtn:hover:not(:disabled) { background: var(--accent-hover); }
+    #sendBtn:active:not(:disabled) { transform: scale(.93); }
+    #sendBtn:disabled { opacity: .4; cursor: not-allowed; }
+    #sendBtn svg { width: 15px; height: 15px; }
+    .input-hint {
+      text-align: center; font-size: 11px; color: var(--text-muted);
+      margin-top: 7px; max-width: 720px; margin-left: auto; margin-right: auto;
+    }
+    kbd {
+      background: var(--border); padding: 1px 5px;
+      border-radius: 4px; font-size: 10px; font-family: inherit;
+    }
+
+    /* Session divider in chat */
+    .session-divider {
+      max-width: 720px; width: 100%; margin: 4px auto;
+      display: flex; align-items: center; gap: 10px;
+      animation: fadeUp .2s ease;
+    }
+    .session-divider-line {
+      flex: 1; height: 1px; background: var(--border);
+    }
+    .session-divider-label {
+      font-size: 10px; color: var(--text-muted);
+      white-space: nowrap; display: flex; align-items: center; gap: 5px;
+    }
+    .session-divider-id {
+      font-family: monospace; color: #6c63ff; font-size: 10px;
+    }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed; bottom: 90px; left: 50%;
+      transform: translateX(-50%) translateY(16px);
+      background: #3d1515; border: 1px solid var(--red);
+      color: #fca5a5; padding: 9px 16px; border-radius: 9px;
+      font-size: 12px; opacity: 0; transition: opacity .3s, transform .3s;
+      pointer-events: none; max-width: 90vw; text-align: center; z-index: 100;
+    }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── Responsive: hide sidebar on narrow screens ── */
+    @media (max-width: 700px) {
+      #scanSidebar { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header>
+  <div class="header-left">
+    <div class="logo">🛡️</div>
+    <div>
+      <div class="header-title">Claude + PAN AI Security</div>
+      <div class="header-subtitle">Prompts inspected before reaching the LLM</div>
+    </div>
+  </div>
+  <div class="header-badges">
+    <div class="badge badge-model">
+      <div class="dot"></div>
+      <span id="modelBadge">…</span>
+    </div>
+    <div class="badge badge-disabled" id="panBadge">
+      <div class="dot"></div>
+      <span id="panBadgeText">PAN …</span>
+    </div>
+  </div>
+</header>
+
+<!-- ── PAN status bar ── -->
+<div id="panStatusBar">
+  <div class="status-icon" id="statusIcon">⚠️</div>
+  <div class="status-body">
+    <div class="status-title" id="statusTitle">PAN Status</div>
+    <div class="status-detail" id="statusDetail"></div>
+  </div>
+</div>
+
+<!-- ── Main area: chat + sidebar ── -->
+<div class="main-area">
+
+  <!-- Chat -->
+  <div id="chat">
+    <div class="welcome" id="welcome">
+      <div class="welcome-icon">🛡️</div>
+      <h2>Secure AI Chat</h2>
+      <p>Prompts are scanned by Palo Alto Networks AI Runtime Security before being sent to Claude.</p>
+      <div class="welcome-features">
+        <div class="feature">🔍 Prompt inspection via PAN AIRS</div>
+        <div class="feature">🤖 Powered by Claude Haiku</div>
+        <div class="feature">📋 Scan results shown in right panel</div>
+      </div>
+    </div>
+    <div class="msg-row claude typing-row" id="typingRow">
+      <div class="avatar avatar-claude">🤖</div>
+      <div class="bubble-wrap">
+        <div class="typing-bubble"><span></span><span></span><span></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Scan Results Sidebar ── -->
+  <div id="scanSidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-header-left">
+        <span>🛡️</span>
+        <span class="sidebar-title">AIRS Scan Results</span>
+        <span class="scan-count" id="scanCount">0</span>
+      </div>
+      <button class="sidebar-clear" id="clearScans" title="Clear all">✕ Clear</button>
+    </div>
+
+    <!-- Stats row -->
+    <div class="sidebar-stats">
+      <div class="stat-box">
+        <div class="stat-value stat-allow" id="statAllow">0</div>
+        <div class="stat-label">Allowed</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value stat-block" id="statBlock">0</div>
+        <div class="stat-label">Blocked</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value stat-skip" id="statSkip">0</div>
+        <div class="stat-label">Skipped</div>
+      </div>
+    </div>
+
+    <!-- Scan entries -->
+    <div id="scanList">
+      <div class="scan-empty" id="scanEmpty">
+        <div class="scan-empty-icon">🔍</div>
+        <div>No scans yet.</div>
+        <div style="margin-top:4px;font-size:11px">Send a message to see results.</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Input ── -->
+<footer>
+  <!-- Toolbar: session info + controls -->
+  <div class="input-toolbar">
+    <div class="session-info">
+      <span class="session-label">Session:</span>
+      <span class="session-id-val" id="sessionIdDisplay">—</span>
+    </div>
+    <button class="new-session-btn" id="newSessionBtn" title="Clear history and start a new session">
+      🔄 New Session
+    </button>
+    <label class="scan-mode-toggle" id="scanModeToggle" title="When on, PAN inspects the full conversation — useful for detecting multi-turn attacks. When off, only the latest message is scanned.">
+      <input type="checkbox" id="scanHistoryChk" />
+      Scan full history
+    </label>
+  </div>
+
+  <div class="input-wrap">
+    <textarea id="prompt" rows="1" placeholder="Type a message…"></textarea>
+    <button id="sendBtn" title="Send (Enter)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+           stroke-linecap="round" stroke-linejoin="round">
+        <line x1="22" y1="2" x2="11" y2="13"></line>
+        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+      </svg>
+    </button>
+  </div>
+  <div class="input-hint">
+    <kbd>Enter</kbd> to send &nbsp;·&nbsp; <kbd>Shift+Enter</kbd> for new line
+  </div>
+</footer>
+
+<div id="toast"></div>
+
+<script>
+  const chatEl        = document.getElementById('chat');
+  const promptEl      = document.getElementById('prompt');
+  const sendBtn       = document.getElementById('sendBtn');
+  const typingRow     = document.getElementById('typingRow');
+  const toast         = document.getElementById('toast');
+  const scanList      = document.getElementById('scanList');
+  const scanEmpty     = document.getElementById('scanEmpty');
+  const scanHistoryChk= document.getElementById('scanHistoryChk');
+  const scanModeToggle= document.getElementById('scanModeToggle');
+  const sessionDisplay= document.getElementById('sessionIdDisplay');
+
+  let history    = [];
+  let sessionId  = newSessionId();
+  let toastTimer;
+  let scanStats  = { allow: 0, block: 0, skip: 0, total: 0 };
+
+  // Initialise session display
+  sessionDisplay.textContent = sessionId;
+
+  function newSessionId() {
+    // Short 8-char ID shown in UI; full UUID sent to backend
+    const full = crypto.randomUUID();
+    return full;
+  }
+
+  function shortId(id) {
+    return id ? id.slice(0, 8) : '—';
+  }
+
+  // ── Scan history checkbox styling ──
+  scanHistoryChk.addEventListener('change', () => {
+    scanModeToggle.classList.toggle('active', scanHistoryChk.checked);
+  });
+
+  // ── New Session button ──
+  document.getElementById('newSessionBtn').addEventListener('click', startNewSession);
+
+  function startNewSession() {
+    history   = [];
+    sessionId = newSessionId();
+    sessionDisplay.textContent = sessionId;
+    document.getElementById('welcome')?.remove();
+    insertSessionDivider(sessionId);
+    promptEl.focus();
+  }
+
+  function insertSessionDivider(sid) {
+    const div = document.createElement('div');
+    div.className = 'session-divider';
+    div.innerHTML = `
+      <div class="session-divider-line"></div>
+      <div class="session-divider-label">
+        🔄 New session &nbsp;
+        <span class="session-divider-id">${shortId(sid)}</span>
+      </div>
+      <div class="session-divider-line"></div>
+    `;
+    chatEl.insertBefore(div, typingRow);
+    scrollBottom();
+  }
+
+  // ── Auto-resize textarea ──
+  promptEl.addEventListener('input', () => {
+    promptEl.style.height = 'auto';
+    promptEl.style.height = Math.min(promptEl.scrollHeight, 150) + 'px';
+  });
+  promptEl.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+  sendBtn.addEventListener('click', sendMessage);
+
+  document.getElementById('clearScans').addEventListener('click', () => {
+    scanStats = { allow: 0, block: 0, skip: 0, total: 0 };
+    updateStats();
+    scanList.innerHTML = '';
+    scanList.appendChild(scanEmpty);
+    scanEmpty.style.display = '';
+  });
+
+  // ── Load health on startup ──
+  async function loadStatus() {
+    try {
+      const res  = await fetch('/health');
+      const data = await res.json();
+
+      document.getElementById('modelBadge').textContent =
+        (data.model || 'claude-haiku-4-5').replace('claude-', '').replace(/-/g, ' ');
+
+      const panBadge = document.getElementById('panBadge');
+      const panText  = document.getElementById('panBadgeText');
+      panBadge.className = 'badge';
+
+      const bar    = document.getElementById('panStatusBar');
+      const icon   = document.getElementById('statusIcon');
+      const title  = document.getElementById('statusTitle');
+      const detail = document.getElementById('statusDetail');
+
+      if (data.pan_status === 'connected') {
+        panBadge.classList.add('badge-connected');
+        panText.textContent = 'PAN Connected';
+        bar.classList.add('visible');
+        bar.classList.remove('status-error', 'status-disabled');
+        icon.textContent  = '✅';
+        title.textContent = 'Palo Alto Networks AIRS — Connected';
+        detail.textContent = `Gateway: ${data.pan_url || '—'}  ·  Profile: ${data.pan_profile || '—'}`;
+      } else if (data.pan_status === 'error') {
+        panBadge.classList.add('badge-error');
+        panText.textContent = 'PAN Error';
+        bar.classList.add('visible', 'status-error');
+        bar.classList.remove('status-disabled');
+        icon.textContent  = '❌';
+        title.textContent = 'PAN connection failed — running fail-open';
+        detail.textContent = `Error: ${data.pan_error || 'unknown'}  ·  URL: ${data.pan_url || '—'}  ·  Profile: ${data.pan_profile || '—'}`;
+      } else {
+        panBadge.classList.add('badge-disabled');
+        panText.textContent = 'PAN Disabled';
+        bar.classList.add('visible', 'status-disabled');
+        bar.classList.remove('status-error');
+        icon.textContent  = '⚠️';
+        title.textContent = 'PAN inspection disabled — set PAN_API_KEY to enable';
+        detail.textContent = `Gateway: ${data.pan_url || '—'}  ·  Profile: ${data.pan_profile || '—'}`;
+      }
+    } catch { document.getElementById('modelBadge').textContent = 'haiku'; }
+  }
+
+  loadStatus();
+
+  // ── Send message ──
+  async function sendMessage() {
+    const text = promptEl.value.trim();
+    if (!text || sendBtn.disabled) return;
+
+    document.getElementById('welcome')?.remove();
+    appendChatMessage('user', text);
+    history.push({ role: 'user', content: text });
+
+    promptEl.value = '';
+    promptEl.style.height = 'auto';
+    sendBtn.disabled = true;
+    showTyping(true);
+    scrollBottom();
+
+    const sentAt   = new Date();
+    const inspMode = scanHistoryChk.checked ? 'full_history' : 'prompt_only';
+
+    try {
+      const res  = await fetch('/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages:         history,
+          pan_inspect_mode: inspMode,
+          session_id:       sessionId,
+        }),
+      });
+      const data = await res.json();
+      showTyping(false);
+
+      if (!res.ok) {
+        const detail = data.detail || {};
+        const pan = (typeof detail === 'object' && detail.pan) ? detail.pan : null;
+
+        if (pan) {
+          addScanEntry({ pan, promptText: text, sentAt, inspMode });
+        }
+
+        if (typeof detail === 'object' && detail.error === 'prompt_blocked') {
+          appendChatMessage('claude', '🚫 Your message was blocked by the security policy.');
+        } else {
+          showToast(typeof detail === 'string' ? detail : JSON.stringify(detail));
+        }
+        return;
+      }
+
+      history.push({ role: 'assistant', content: data.response });
+      appendChatMessage('claude', data.response);
+
+      // Add scan entry to sidebar
+      if (data.pan) {
+        addScanEntry({ pan: data.pan, promptText: text, sentAt, inspMode });
+      }
+
+    } catch (err) {
+      showTyping(false);
+      showToast('Connection error — is the server running?');
+    } finally {
+      sendBtn.disabled = false;
+      promptEl.focus();
+      scrollBottom();
+    }
+  }
+
+  // ── Add entry to sidebar ──
+  function addScanEntry({ pan, promptText, sentAt, inspMode }) {
+    scanEmpty.style.display = 'none';
+
+    // Determine display state
+    let verdictClass, verdictIcon, verdictLabel, labelClass;
+    if (!pan.was_scanned) {
+      verdictClass = 'verdict-skip';
+      verdictIcon  = '⚠';
+      verdictLabel = pan.error ? 'Error / Fail-Open' : 'Skipped';
+      labelClass   = 'label-skip';
+      scanStats.skip++;
+    } else if (pan.verdict === 'block') {
+      verdictClass = 'verdict-block';
+      verdictIcon  = '✕';
+      verdictLabel = 'Blocked';
+      labelClass   = 'label-block';
+      scanStats.block++;
+    } else {
+      verdictClass = 'verdict-allow';
+      verdictIcon  = '✓';
+      verdictLabel = 'Allowed';
+      labelClass   = 'label-allow';
+      scanStats.allow++;
+    }
+    scanStats.total++;
+    updateStats();
+
+    const timeStr = sentAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const preview = promptText.length > 55 ? promptText.slice(0, 55) + '…' : promptText;
+
+    // Build card
+    const card = document.createElement('div');
+    card.className = 'scan-card';
+
+    card.innerHTML = `
+      <div class="scan-card-header">
+        <div class="scan-verdict-icon ${verdictClass}">${verdictIcon}</div>
+        <div class="scan-card-main">
+          <div class="scan-card-top">
+            <span class="scan-verdict-label ${labelClass}">${verdictLabel}</span>
+            <span class="scan-time">${timeStr}</span>
+          </div>
+          <div class="scan-prompt-preview">${escHtml(preview)}</div>
+        </div>
+        <div class="scan-chevron">▼</div>
+      </div>
+
+      <div class="scan-card-detail">
+        <div class="detail-section-title">Scan Result</div>
+        <div class="detail-grid">
+          ${detailRow('Inspected',
+              pan.was_scanned ? 'Yes — real AIRS scan' : 'No — skipped',
+              pan.was_scanned ? 'green' : 'yellow')}
+          ${detailRow('Verdict',
+              pan.verdict || '—',
+              pan.verdict === 'allow' ? 'green' : pan.verdict === 'block' ? 'red' : '')}
+          ${pan.scan_id   ? detailRow('Scan ID',   pan.scan_id,   'mono') : ''}
+          ${pan.category  ? detailRow('Category',  pan.category,  '')     : ''}
+          ${pan.reason    ? detailRow('Reason',    pan.reason,    '')     : ''}
+          ${pan.error     ? detailRow('Error',     pan.error,     'red')  : ''}
+        </div>
+
+        <div class="detail-section-title" style="margin-top:10px">Prompt Sent to PAN</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">
+          Mode: <strong style="color:${inspMode==='full_history'?'#a78bfa':'var(--text)'}">
+            ${inspMode === 'full_history' ? '📋 Full conversation history' : '💬 Latest prompt only'}
+          </strong>
+        </div>
+        <div class="prompt-full">${escHtml(promptText)}</div>
+
+        ${pan.raw_response ? `
+          <div class="raw-toggle" onclick="toggleRaw(this)">▶ Raw AIRS response</div>
+          <pre class="raw-json">${escHtml(JSON.stringify(pan.raw_response, null, 2))}</pre>
+        ` : ''}
+      </div>
+    `;
+
+    card.querySelector('.scan-card-header').addEventListener('click', () => {
+      card.classList.toggle('expanded');
+    });
+
+    // Newest at top
+    scanList.insertBefore(card, scanList.firstChild);
+  }
+
+  function detailRow(label, value, cls) {
+    return `<div class="detail-row">
+      <span class="detail-label">${label}</span>
+      <span class="detail-val ${cls}">${escHtml(String(value))}</span>
+    </div>`;
+  }
+
+  function toggleRaw(el) {
+    const raw = el.nextElementSibling;
+    raw.classList.toggle('open');
+    el.textContent = raw.classList.contains('open')
+      ? '▼ Raw AIRS response'
+      : '▶ Raw AIRS response';
+  }
+
+  function updateStats() {
+    document.getElementById('scanCount').textContent = scanStats.total;
+    document.getElementById('statAllow').textContent = scanStats.allow;
+    document.getElementById('statBlock').textContent = scanStats.block;
+    document.getElementById('statSkip').textContent  = scanStats.skip;
+  }
+
+  // ── Chat helpers ──
+  function appendChatMessage(role, text) {
+    const row = document.createElement('div');
+    row.className = `msg-row ${role}`;
+
+    const avatar = document.createElement('div');
+    avatar.className = `avatar avatar-${role}`;
+    avatar.textContent = role === 'user' ? '👤' : '🤖';
+
+    const wrap = document.createElement('div');
+    wrap.className = 'bubble-wrap';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.textContent = text;
+
+    const meta = document.createElement('div');
+    meta.className = 'msg-meta';
+    meta.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    wrap.appendChild(bubble);
+    wrap.appendChild(meta);
+    row.appendChild(avatar);
+    row.appendChild(wrap);
+    chatEl.insertBefore(row, typingRow);
+  }
+
+  function showTyping(show) { typingRow.classList.toggle('visible', show); }
+  function scrollBottom() {
+    setTimeout(() => chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: 'smooth' }), 50);
+  }
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 5000);
+  }
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+</script>
+</body>
+</html>

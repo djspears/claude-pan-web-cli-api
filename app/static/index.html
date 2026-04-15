@@ -866,6 +866,9 @@
         const detail = data.detail || {};
         const pan = (typeof detail === 'object' && detail.pan) ? detail.pan : null;
 
+        // Remove blocked message from history so it doesn't cascade into future scans
+        history.pop();
+
         if (pan) {
           addScanEntry({ pan, promptText: text, sentAt, inspMode });
         }
@@ -888,6 +891,7 @@
 
     } catch (err) {
       showTyping(false);
+      history.pop();
       showToast('Connection error — is the server running?');
     } finally {
       sendBtn.disabled = false;

@@ -23,10 +23,19 @@ A security-focused proxy service that integrates Claude AI with Palo Alto Networ
 
 ---
 
+## Getting Started
+
+**Clone the repository:**
+```bash
+git clone https://github.com/djspears/claude-pan-web-cli-api.git
+cd claude-pan-web-cli-api
+```
+
+---
+
 ## 1. Set Up Environment Variables
 
 ```bash
-cd /Users/dspears/Claude/Projects/claude-pan-web-cli-api
 cp .env.example .env
 ```
 
@@ -51,7 +60,7 @@ LOG_LEVEL=INFO
 ## 2. Install Dependencies
 
 ```bash
-pip3 install -r /Users/dspears/Claude/Projects/claude-pan-web-cli-api/requirements.txt
+pip3 install -r requirements.txt
 ```
 
 > Dependencies only need to be installed once.
@@ -61,7 +70,6 @@ pip3 install -r /Users/dspears/Claude/Projects/claude-pan-web-cli-api/requiremen
 ## 3. Run the Web Interface (Local Python)
 
 ```bash
-cd /Users/dspears/Claude/Projects/claude-pan-web-cli-api
 set -a && source .env && set +a
 cd app
 uvicorn main:app --host 0.0.0.0 --port 8080 --workers 2
@@ -76,7 +84,6 @@ Then open **http://localhost:8080** in your browser.
 Open a new terminal tab:
 
 ```bash
-cd /Users/dspears/Claude/Projects/claude-pan-web-cli-api
 set -a && source .env && set +a
 cd app
 python3 cli.py
@@ -100,7 +107,6 @@ python3 cli.py
 
 **Build the image:**
 ```bash
-cd /Users/dspears/Claude/Projects/claude-pan-web-cli-api
 docker build -t claude-pan-web-cli-api .
 ```
 
@@ -154,7 +160,6 @@ Then update `deployment.yaml` to match.
 
 **Step 4 — Apply all manifests:**
 ```bash
-cd /Users/dspears/Claude/Projects/claude-pan-web-cli-api
 kubectl apply -f k8s/secret.yaml
 kubectl apply -f k8s/configmap.yaml
 kubectl apply -f k8s/deployment.yaml
@@ -217,6 +222,5 @@ claude-pan-web-cli-api/
 ## Notes
 
 - `set -a && source .env && set +a` exports all variables from `.env` into the shell session. Run this in each new terminal before starting the app or CLI.
-- The app was originally written for Python 3.10+ but has been patched to run on Python 3.9.
 - The Kubernetes deployment runs 2 replicas with a rolling update strategy and includes liveness/readiness probes on `/health`.
 - The `/health` endpoint never calls the PAN API — it returns a cached status from startup to avoid flooding AIRS logs.

@@ -75,7 +75,7 @@ cd app
 uvicorn main:app --host 0.0.0.0 --port 8080 --workers 2
 ```
 
-Then open **http://localhost:8080** in your browser.
+Then open **http://127.0.0.1:8080** in your browser.
 
 ---
 
@@ -119,7 +119,7 @@ docker run -d \
   claude-pan-web-cli-api
 ```
 
-Then open **http://localhost:8080** in your browser.
+Then open **http://127.0.0.1:8080** in your browser.
 
 **Run the CLI inside the container:**
 ```bash
@@ -179,7 +179,7 @@ The default service type is `ClusterIP` (internal only). To access it locally:
 ```bash
 kubectl port-forward service/claude-pan-proxy 8080:80
 ```
-Then open **http://localhost:8080**.
+Then open **http://127.0.0.1:8080**.
 
 To expose it externally, edit `k8s/service.yaml` and switch to `LoadBalancer` as noted in the comments, then re-apply.
 

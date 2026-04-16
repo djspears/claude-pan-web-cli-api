@@ -2,6 +2,8 @@
 
 A security-focused proxy service that integrates Claude AI with Palo Alto Networks AI Runtime Security (AIRS). All prompts are scanned by AIRS before being sent to Claude. Provides both a web UI and interactive CLI interface.
 
+![Web UI](screenshots/webui.png)
+
 ![Prisma AIRS Dashboard](screenshots/PrismaAIRS.png)
 
 ## Features
@@ -80,8 +82,6 @@ uvicorn main:app --host 0.0.0.0 --port 8080 --workers 2
 ```
 
 Then open **http://127.0.0.1:8080** in your browser.
-
-![Web UI](screenshots/webui.png)
 
 ---
 

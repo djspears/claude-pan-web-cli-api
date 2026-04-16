@@ -2,6 +2,8 @@
 
 A security-focused proxy service that integrates Claude AI with Palo Alto Networks AI Runtime Security (AIRS). All prompts are scanned by AIRS before being sent to Claude. Provides both a web UI and interactive CLI interface.
 
+![Prisma AIRS Dashboard](screenshots/PrismaAIRS.png)
+
 ## Features
 
 - **Prompt Inspection** — All prompts scanned by Palo Alto Networks AIRS before reaching Claude
@@ -11,6 +13,8 @@ A security-focused proxy service that integrates Claude AI with Palo Alto Networ
 - **Multi-Turn Attack Detection** — Optional scanning of full conversation history
 - **Response Scanning** — Optional scanning of Claude's responses for data exfiltration
 - **Full Audit Trail** — Scan ID, verdict, category, and raw PAN response data
+
+![Web UI with prompts](screenshots/WebUI-with%20prompts.png)
 
 ---
 
@@ -77,6 +81,8 @@ uvicorn main:app --host 0.0.0.0 --port 8080 --workers 2
 
 Then open **http://127.0.0.1:8080** in your browser.
 
+![Web UI](screenshots/webui.png)
+
 ---
 
 ## 4. Run the CLI (Local Python)
@@ -100,6 +106,8 @@ python3 cli.py
 | `/clear` | Clear the screen |
 | `/help` | Show help |
 | `/quit` or `/exit` | Exit |
+
+![CLI Example](screenshots/CLI%20example.png)
 
 ---
 

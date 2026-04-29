@@ -10,7 +10,7 @@ A security-focused proxy service that integrates Claude AI with Palo Alto Networ
 
 - **Prompt Inspection** — All prompts scanned by Palo Alto Networks AIRS before reaching Claude
 - **Fail-Open Design** — If PAN is unavailable or disabled, requests pass through without blocking
-- **Web UI** — Chat interface with real-time scan results sidebar
+- **Web UI** — Three-column interface showing chat, AIRS request payload, and AIRS response in real-time
 - **CLI** — Interactive terminal session with colored output and scan verdicts
 - **REST API** — Python client for programmatic access and red team testing
 - **Multi-Turn Attack Detection** — Optional scanning of full conversation history

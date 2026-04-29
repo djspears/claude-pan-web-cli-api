@@ -77,4 +77,6 @@ class HealthResponse(BaseModel):
     pan_status: PANConnectionStatus = PANConnectionStatus.disabled
     pan_url: Optional[str] = None
     pan_profile: Optional[str] = None
+    pan_profile_id: Optional[str] = None
+    pan_app_name: Optional[str] = None
     pan_error: Optional[str] = None

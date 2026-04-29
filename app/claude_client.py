@@ -28,7 +28,11 @@ class ClaudeClient:
         api_key = os.getenv("ANTHROPIC_API_KEY", "")
         if not api_key:
             raise RuntimeError("ANTHROPIC_API_KEY environment variable is not set")
-        self.client = anthropic.AsyncAnthropic(api_key=api_key)
+        self.client = anthropic.AsyncAnthropic(
+            api_key=api_key,
+            timeout=60.0,  # Increase timeout to 60 seconds
+            max_retries=3,
+        )
         self.model = CLAUDE_MODEL
 
     async def chat(

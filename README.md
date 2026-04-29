@@ -12,6 +12,7 @@ A security-focused proxy service that integrates Claude AI with Palo Alto Networ
 - **Fail-Open Design** — If PAN is unavailable or disabled, requests pass through without blocking
 - **Web UI** — Chat interface with real-time scan results sidebar
 - **CLI** — Interactive terminal session with colored output and scan verdicts
+- **REST API** — Python client for programmatic access and red team testing
 - **Multi-Turn Attack Detection** — Optional scanning of full conversation history
 - **Response Scanning** — Optional scanning of Claude's responses for data exfiltration
 - **Full Audit Trail** — Scan ID, verdict, category, and raw PAN response data
@@ -198,6 +199,7 @@ To expose it externally, edit `k8s/service.yaml` and switch to `LoadBalancer` as
 ```
 claude-pan-web-cli-api/
 ├── app/
+│   ├── api_client.py       # Python API client for programmatic access
 │   ├── claude_client.py    # Anthropic Claude API wrapper
 │   ├── cli.py              # Interactive CLI interface
 │   ├── main.py             # FastAPI web server & REST endpoints
@@ -205,6 +207,11 @@ claude-pan-web-cli-api/
 │   ├── pan_client.py       # Palo Alto Networks AIRS API client
 │   └── static/
 │       └── index.html      # Web UI (single-page app)
+├── examples/
+│   ├── redteam_basic.py    # Basic red team attack testing
+│   ├── redteam_multiturn.py # Multi-turn attack scenarios
+│   ├── redteam_batch.py    # Batch testing from files
+│   └── README.md           # Red teaming documentation
 ├── k8s/
 │   ├── configmap.yaml      # Non-secret configuration
 │   ├── deployment.yaml     # Kubernetes Deployment (2 replicas)
@@ -224,6 +231,87 @@ claude-pan-web-cli-api/
 | `GET` | `/` | Serve the web UI |
 | `GET` | `/health` | Health check — returns cached PAN connection status |
 | `POST` | `/chat` | Send a message and receive Claude's response with PAN scan details |
+
+### API Usage
+
+The `/chat` endpoint accepts JSON requests:
+
+```json
+POST /chat
+{
+  "messages": [
+    {"role": "user", "content": "What is prompt injection?"}
+  ],
+  "pan_inspect_mode": "prompt_only",
+  "session_id": "optional-session-id",
+  "system": "Optional system prompt",
+  "max_tokens": 16000
+}
+```
+
+**Response:**
+```json
+{
+  "response": "Prompt injection is...",
+  "model": "claude-haiku-4-5",
+  "pan": {
+    "was_scanned": true,
+    "verdict": "allow",
+    "scan_id": "abc-123",
+    "category": "benign",
+    "reason": null,
+    "error": null,
+    "raw_response": {...}
+  }
+}
+```
+
+---
+
+## Red Team Testing & Programmatic Access
+
+**📖 Quick Start:** See [`API_QUICKSTART.md`](API_QUICKSTART.md) for a fast introduction to API testing.
+
+The `examples/` directory contains Python scripts for red teaming with Prisma AIRS:
+
+```bash
+# Basic attack vector testing
+export PYTHONPATH="${PYTHONPATH}:./app"
+python3 examples/redteam_basic.py
+
+# Multi-turn attack testing
+python3 examples/redteam_multiturn.py
+
+# Batch testing from file
+python3 examples/redteam_batch.py --create-example
+python3 examples/redteam_batch.py --input tests.json --output results.json
+```
+
+### Python API Client
+
+Use `api_client.py` for programmatic access:
+
+```python
+import asyncio
+from api_client import ClaudePANClient, ConversationSession
+
+async def main():
+    client = ClaudePANClient("http://127.0.0.1:8080")
+    
+    # Single message
+    response = await client.chat("What is SQL injection?")
+    print(f"Verdict: {response['pan']['verdict']}")
+    
+    # Multi-turn conversation
+    async with ConversationSession(client) as session:
+        await session.send("Hello")
+        await session.send("Tell me about prompt injection")
+        print(session.get_scan_results())
+
+asyncio.run(main())
+```
+
+See [`examples/README.md`](examples/README.md) for detailed documentation.
 
 ---
 

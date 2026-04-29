@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Claude + PAN AI Security</title>
+  <title>Chatbot + PAN AIRS Security</title>
   <style>
     :root {
       --bg: #0f1117;
@@ -22,7 +22,7 @@
       --user-bubble: #2d3a6e;
       --claude-bubble: #1e2235;
       --radius: 14px;
-      --sidebar-width: 300px;
+      --col-width: 33.333%;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -86,315 +86,111 @@
     .status-title { font-weight: 600; }
     .status-detail { color: var(--text-muted); font-size: 11px; }
 
-    /* ── Main layout: chat + sidebar ── */
+    /* ── Three Column Layout ── */
     .main-area {
       display: flex;
       flex: 1;
       overflow: hidden;
     }
 
-    /* ── Chat ── */
-    #chat {
+    .column {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-right: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .column:last-child { border-right: none; }
+
+    .column-header {
+      padding: 10px 14px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .column-icon {
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .column-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
+      flex: 1;
+    }
+
+    .column-badge {
+      background: var(--surface3);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 2px 8px;
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .column-toggle {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+      padding: 3px 8px;
+      border-radius: 6px;
+      transition: background 0.15s;
+    }
+    .column-toggle:hover {
+      background: var(--surface2);
+    }
+    .column-toggle input {
+      cursor: pointer;
+      accent-color: var(--accent);
+    }
+
+    .column-content {
       flex: 1;
       overflow-y: auto;
+      padding: 16px;
+    }
+    .column-content::-webkit-scrollbar { width: 5px; }
+    .column-content::-webkit-scrollbar-track { background: transparent; }
+    .column-content::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── Column 1: Chat ── */
+    #chat {
       padding: 20px 16px;
       display: flex;
       flex-direction: column;
       gap: 14px;
       scroll-behavior: smooth;
-      min-width: 0;
-    }
-    #chat::-webkit-scrollbar { width: 5px; }
-    #chat::-webkit-scrollbar-track { background: transparent; }
-    #chat::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
-    /* ── Scan results sidebar ── */
-    #scanSidebar {
-      width: var(--sidebar-width);
-      flex-shrink: 0;
-      background: var(--surface);
-      border-left: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
     }
 
-    .sidebar-header {
-      padding: 12px 14px;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-shrink: 0;
+    .welcome {
+      text-align: center; margin: auto;
+      padding: 36px 20px; max-width: 380px;
+    }
+    .welcome-icon { font-size: 44px; margin-bottom: 14px; }
+    .welcome h2 { font-size: 19px; font-weight: 600; margin-bottom: 7px; }
+    .welcome p { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+    .welcome-features { margin-top: 18px; display: flex; flex-direction: column; gap: 7px; text-align: left; }
+    .feature {
+      display: flex; align-items: center; gap: 9px;
+      padding: 9px 12px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 9px; font-size: 12px; color: var(--text-muted);
     }
 
-    .sidebar-header-left {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .sidebar-title {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text);
-    }
-
-    .scan-count {
-      background: var(--surface3);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 1px 7px;
-      font-size: 10px;
-      font-weight: 600;
-      color: var(--text-muted);
-    }
-
-    .sidebar-stats {
-      display: flex;
-      gap: 8px;
-      padding: 8px 14px;
-      border-bottom: 1px solid var(--border);
-      flex-shrink: 0;
-    }
-
-    .stat-box {
-      flex: 1;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 6px 8px;
-      text-align: center;
-    }
-
-    .stat-value {
-      font-size: 18px;
-      font-weight: 700;
-      line-height: 1.2;
-    }
-
-    .stat-label {
-      font-size: 9px;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: .4px;
-      margin-top: 1px;
-    }
-
-    .stat-allow { color: var(--green); }
-    .stat-block { color: var(--red); }
-    .stat-skip  { color: var(--yellow); }
-
-    .sidebar-clear {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      font-size: 11px;
-      cursor: pointer;
-      padding: 2px 4px;
-      border-radius: 4px;
-      transition: color .15s;
-    }
-    .sidebar-clear:hover { color: var(--text); }
-
-    /* ── Scan list ── */
-    #scanList {
-      flex: 1;
-      overflow-y: auto;
-      padding: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    #scanList::-webkit-scrollbar { width: 4px; }
-    #scanList::-webkit-scrollbar-track { background: transparent; }
-    #scanList::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-    .scan-empty {
-      text-align: center;
-      padding: 40px 16px;
-      color: var(--text-muted);
-      font-size: 12px;
-    }
-    .scan-empty-icon { font-size: 28px; margin-bottom: 8px; }
-
-    /* ── Scan entry card ── */
-    .scan-card {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      overflow: hidden;
-      animation: fadeUp .2s ease;
-      cursor: pointer;
-      transition: border-color .15s;
-    }
-    .scan-card:hover { border-color: var(--accent); }
-    .scan-card.expanded { border-color: var(--border); }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(5px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .scan-card-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 9px 10px;
-    }
-
-    .scan-verdict-icon {
-      width: 26px; height: 26px;
-      border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 12px;
-      flex-shrink: 0;
-    }
-    .verdict-allow { background: rgba(34,197,94,.15);  color: var(--green); }
-    .verdict-block { background: rgba(239,68,68,.15);  color: var(--red); }
-    .verdict-skip  { background: rgba(245,158,11,.15); color: var(--yellow); }
-
-    .scan-card-main {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .scan-card-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 4px;
-      margin-bottom: 2px;
-    }
-
-    .scan-verdict-label {
-      font-size: 11px;
-      font-weight: 700;
-    }
-    .label-allow { color: var(--green); }
-    .label-block { color: var(--red); }
-    .label-skip  { color: var(--yellow); }
-
-    .scan-time {
-      font-size: 10px;
-      color: var(--text-muted);
-      flex-shrink: 0;
-    }
-
-    .scan-prompt-preview {
-      font-size: 11px;
-      color: var(--text-muted);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .scan-chevron {
-      color: var(--text-muted);
-      font-size: 10px;
-      flex-shrink: 0;
-      transition: transform .2s;
-    }
-    .scan-card.expanded .scan-chevron { transform: rotate(180deg); }
-
-    /* ── Scan detail panel (expanded) ── */
-    .scan-card-detail {
-      display: none;
-      border-top: 1px solid var(--border);
-      padding: 10px;
-      font-size: 11px;
-      background: var(--surface);
-    }
-    .scan-card.expanded .scan-card-detail { display: block; }
-
-    .detail-section-title {
-      font-size: 10px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .5px;
-      color: var(--text-muted);
-      margin-bottom: 6px;
-      margin-top: 10px;
-    }
-    .detail-section-title:first-child { margin-top: 0; }
-
-    .detail-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .detail-row {
-      display: flex;
-      gap: 6px;
-      align-items: flex-start;
-    }
-
-    .detail-label {
-      color: var(--text-muted);
-      min-width: 68px;
-      flex-shrink: 0;
-      font-size: 10px;
-      padding-top: 1px;
-    }
-
-    .detail-val {
-      color: var(--text);
-      word-break: break-all;
-      font-size: 11px;
-    }
-    .detail-val.mono  { font-family: monospace; font-size: 10px; color: #a78bfa; }
-    .detail-val.green { color: var(--green); font-weight: 600; }
-    .detail-val.red   { color: var(--red);   font-weight: 600; }
-    .detail-val.yellow{ color: var(--yellow); font-weight: 600; }
-
-    .prompt-full {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 7px 9px;
-      font-size: 11px;
-      color: var(--text-muted);
-      line-height: 1.5;
-      max-height: 80px;
-      overflow-y: auto;
-      white-space: pre-wrap;
-      word-break: break-word;
-      margin-top: 4px;
-    }
-
-    .raw-toggle {
-      color: var(--accent);
-      cursor: pointer;
-      font-size: 10px;
-      margin-top: 8px;
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-    }
-    .raw-toggle:hover { color: var(--accent-hover); }
-
-    .raw-json {
-      display: none;
-      margin-top: 6px;
-      background: #12141e;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 7px 9px;
-      font-family: monospace;
-      font-size: 10px;
-      color: #a78bfa;
-      white-space: pre-wrap;
-      word-break: break-all;
-      max-height: 150px;
-      overflow-y: auto;
-    }
-    .raw-json.open { display: block; }
-
-    /* ── Messages ── */
     .msg-row {
       display: flex; gap: 9px;
-      max-width: 720px; width: 100%; margin: 0 auto;
+      max-width: 100%; width: 100%;
       animation: fadeUp .18s ease;
     }
     .msg-row.user { flex-direction: row-reverse; }
@@ -419,7 +215,6 @@
       display: flex; align-items: center; gap: 6px; padding: 0 3px;
     }
 
-    /* ── Typing indicator ── */
     .typing-row { display: none; }
     .typing-row.visible { display: flex; }
     .typing-bubble {
@@ -437,22 +232,121 @@
       0%,60%,100% { transform: translateY(0); }
       30%          { transform: translateY(-5px); }
     }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(5px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
 
-    /* ── Welcome ── */
-    .welcome {
-      text-align: center; margin: auto;
-      padding: 36px 20px; max-width: 380px;
+    .session-divider {
+      width: 100%; margin: 4px 0;
+      display: flex; align-items: center; gap: 10px;
+      animation: fadeUp .2s ease;
     }
-    .welcome-icon { font-size: 44px; margin-bottom: 14px; }
-    .welcome h2 { font-size: 19px; font-weight: 600; margin-bottom: 7px; }
-    .welcome p { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
-    .welcome-features { margin-top: 18px; display: flex; flex-direction: column; gap: 7px; text-align: left; }
-    .feature {
-      display: flex; align-items: center; gap: 9px;
-      padding: 9px 12px;
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 9px; font-size: 12px; color: var(--text-muted);
+    .session-divider-line {
+      flex: 1; height: 1px; background: var(--border);
     }
+    .session-divider-label {
+      font-size: 10px; color: var(--text-muted);
+      white-space: nowrap; display: flex; align-items: center; gap: 5px;
+    }
+    .session-divider-id {
+      font-family: monospace; color: #6c63ff; font-size: 10px;
+    }
+
+    /* ── Column 2 & 3: AIRS Data ── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+    .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+
+    .json-display {
+      background: #12141e;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+      font-size: 11px;
+      color: #e8eaf0;
+      white-space: pre-wrap;
+      word-break: break-all;
+      line-height: 1.6;
+      overflow-x: auto;
+    }
+
+    .json-key { color: #6c63ff; }
+    .json-string { color: #22c55e; }
+    .json-number { color: #f59e0b; }
+    .json-boolean { color: #3b82f6; }
+    .json-null { color: #ef4444; }
+
+    .info-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+
+    .info-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+    .info-row:last-child { margin-bottom: 0; }
+
+    .info-label {
+      color: var(--text-muted);
+      min-width: 100px;
+      flex-shrink: 0;
+      font-weight: 600;
+    }
+
+    .info-value {
+      color: var(--text);
+      flex: 1;
+      font-family: monospace;
+      font-size: 11px;
+    }
+
+    .verdict-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .verdict-allow {
+      background: rgba(34,197,94,.15);
+      color: var(--green);
+      border: 1px solid rgba(34,197,94,.3);
+    }
+    .verdict-block {
+      background: rgba(239,68,68,.15);
+      color: var(--red);
+      border: 1px solid rgba(239,68,68,.3);
+    }
+    .verdict-skip {
+      background: rgba(245,158,11,.15);
+      color: var(--yellow);
+      border: 1px solid rgba(245,158,11,.3);
+    }
+
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      margin-top: 20px;
+    }
+    .section-title:first-child { margin-top: 0; }
 
     /* ── Input ── */
     footer {
@@ -462,9 +356,8 @@
       flex-shrink: 0;
     }
 
-    /* toolbar row above the text box */
     .input-toolbar {
-      max-width: 720px; margin: 0 auto 8px;
+      max-width: 100%; margin: 0 auto 8px;
       display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
     }
 
@@ -473,11 +366,13 @@
       font-size: 11px; color: var(--text-muted);
       flex: 1; min-width: 0;
     }
-    .session-label { white-space: nowrap; }
+    .session-label { white-space: nowrap; flex-shrink: 0; }
     .session-id-val {
       font-family: monospace; font-size: 10px; color: #a78bfa;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      max-width: 140px;
+      overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+      min-width: 0;
     }
 
     .new-session-btn {
@@ -490,7 +385,6 @@
     }
     .new-session-btn:hover { border-color: var(--accent); color: var(--text); }
 
-    /* scan history toggle */
     .scan-mode-toggle {
       display: flex; align-items: center; gap: 6px;
       font-size: 11px; color: var(--text-muted);
@@ -509,7 +403,7 @@
     }
 
     .input-wrap {
-      max-width: 720px; margin: 0 auto;
+      max-width: 100%; margin: 0 auto;
       display: flex; gap: 9px; align-items: flex-end;
       background: var(--surface2); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 9px 11px;
@@ -534,28 +428,11 @@
     #sendBtn svg { width: 15px; height: 15px; }
     .input-hint {
       text-align: center; font-size: 11px; color: var(--text-muted);
-      margin-top: 7px; max-width: 720px; margin-left: auto; margin-right: auto;
+      margin-top: 7px; max-width: 100%; margin-left: auto; margin-right: auto;
     }
     kbd {
       background: var(--border); padding: 1px 5px;
       border-radius: 4px; font-size: 10px; font-family: inherit;
-    }
-
-    /* Session divider in chat */
-    .session-divider {
-      max-width: 720px; width: 100%; margin: 4px auto;
-      display: flex; align-items: center; gap: 10px;
-      animation: fadeUp .2s ease;
-    }
-    .session-divider-line {
-      flex: 1; height: 1px; background: var(--border);
-    }
-    .session-divider-label {
-      font-size: 10px; color: var(--text-muted);
-      white-space: nowrap; display: flex; align-items: center; gap: 5px;
-    }
-    .session-divider-id {
-      font-family: monospace; color: #6c63ff; font-size: 10px;
     }
 
     /* ── Toast ── */
@@ -569,9 +446,9 @@
     }
     #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-    /* ── Responsive: hide sidebar on narrow screens ── */
-    @media (max-width: 700px) {
-      #scanSidebar { display: none; }
+    /* ── Responsive ── */
+    @media (max-width: 1200px) {
+      .column { min-width: 300px; }
     }
   </style>
 </head>
@@ -582,8 +459,8 @@
   <div class="header-left">
     <div class="logo">🛡️</div>
     <div>
-      <div class="header-title">Claude + PAN AI Security</div>
-      <div class="header-subtitle">Prompts inspected before reaching the LLM</div>
+      <div class="header-title">Chatbot + PAN AIRS Security - Three Column View</div>
+      <div class="header-subtitle">Prompt Inspection · AIRS Request · AIRS Response</div>
     </div>
   </div>
   <div class="header-badges">
@@ -607,62 +484,67 @@
   </div>
 </div>
 
-<!-- ── Main area: chat + sidebar ── -->
+<!-- ── Three Column Layout ── -->
 <div class="main-area">
 
-  <!-- Chat -->
-  <div id="chat">
-    <div class="welcome" id="welcome">
-      <div class="welcome-icon">🛡️</div>
-      <h2>Secure AI Chat</h2>
-      <p>Prompts are scanned by Palo Alto Networks AI Runtime Security before being sent to Claude.</p>
-      <div class="welcome-features">
-        <div class="feature">🔍 Prompt inspection via PAN AIRS</div>
-        <div class="feature">🤖 Powered by Claude Haiku</div>
-        <div class="feature">📋 Scan results shown in right panel</div>
-      </div>
+  <!-- Column 1: Chat / Prompt Inspection -->
+  <div class="column">
+    <div class="column-header">
+      <span class="column-icon">💬</span>
+      <span class="column-title">Prompt Inspection</span>
     </div>
-    <div class="msg-row claude typing-row" id="typingRow">
-      <div class="avatar avatar-claude">🤖</div>
-      <div class="bubble-wrap">
-        <div class="typing-bubble"><span></span><span></span><span></span></div>
+    <div id="chat" class="column-content">
+      <div class="welcome" id="welcome">
+        <div class="welcome-icon">🛡️</div>
+        <h2>Secure AI Chatbot</h2>
+        <p>All prompts are scanned by Palo Alto Networks AIRS before reaching the AI model.</p>
+        <div class="welcome-features">
+          <div class="feature">🔍 Real-time prompt inspection</div>
+          <div class="feature">🤖 Powered by Claude AI</div>
+          <div class="feature">📊 Full AIRS request/response visibility</div>
+        </div>
+      </div>
+      <div class="msg-row claude typing-row" id="typingRow">
+        <div class="avatar avatar-claude">🤖</div>
+        <div class="bubble-wrap">
+          <div class="typing-bubble"><span></span><span></span><span></span></div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- ── Scan Results Sidebar ── -->
-  <div id="scanSidebar">
-    <div class="sidebar-header">
-      <div class="sidebar-header-left">
-        <span>🛡️</span>
-        <span class="sidebar-title">AIRS Scan Results</span>
-        <span class="scan-count" id="scanCount">0</span>
-      </div>
-      <button class="sidebar-clear" id="clearScans" title="Clear all">✕ Clear</button>
+  <!-- Column 2: AIRS Request -->
+  <div class="column">
+    <div class="column-header">
+      <span class="column-icon">📤</span>
+      <span class="column-title">Prisma AIRS Request</span>
+      <label class="column-toggle" title="Show complete HTTP request with headers">
+        <input type="checkbox" id="showFullRequestChk" />
+        <span>Full Request</span>
+      </label>
+      <span class="column-badge" id="requestCount">0</span>
     </div>
-
-    <!-- Stats row -->
-    <div class="sidebar-stats">
-      <div class="stat-box">
-        <div class="stat-value stat-allow" id="statAllow">0</div>
-        <div class="stat-label">Allowed</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-value stat-block" id="statBlock">0</div>
-        <div class="stat-label">Blocked</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-value stat-skip" id="statSkip">0</div>
-        <div class="stat-label">Skipped</div>
+    <div id="airsRequest" class="column-content">
+      <div class="empty-state">
+        <div class="empty-icon">📤</div>
+        <div>No requests yet</div>
+        <div style="margin-top:8px;font-size:11px;">Send a message to see the API payload</div>
       </div>
     </div>
+  </div>
 
-    <!-- Scan entries -->
-    <div id="scanList">
-      <div class="scan-empty" id="scanEmpty">
-        <div class="scan-empty-icon">🔍</div>
-        <div>No scans yet.</div>
-        <div style="margin-top:4px;font-size:11px">Send a message to see results.</div>
+  <!-- Column 3: AIRS Response -->
+  <div class="column">
+    <div class="column-header">
+      <span class="column-icon">📥</span>
+      <span class="column-title">Prisma AIRS Response</span>
+      <span class="column-badge" id="responseCount">0</span>
+    </div>
+    <div id="airsResponse" class="column-content">
+      <div class="empty-state">
+        <div class="empty-icon">📥</div>
+        <div>No responses yet</div>
+        <div style="margin-top:8px;font-size:11px;">Send a message to see the scan results</div>
       </div>
     </div>
   </div>
@@ -671,16 +553,15 @@
 
 <!-- ── Input ── -->
 <footer>
-  <!-- Toolbar: session info + controls -->
   <div class="input-toolbar">
     <div class="session-info">
       <span class="session-label">Session:</span>
-      <span class="session-id-val" id="sessionIdDisplay">—</span>
+      <span class="session-id-val" id="sessionIdDisplay" title="Full session ID">—</span>
     </div>
     <button class="new-session-btn" id="newSessionBtn" title="Clear history and start a new session">
       🔄 New Session
     </button>
-    <label class="scan-mode-toggle" id="scanModeToggle" title="When on, PAN inspects the full conversation — useful for detecting multi-turn attacks. When off, only the latest message is scanned.">
+    <label class="scan-mode-toggle" id="scanModeToggle" title="When on, PAN inspects the full conversation history">
       <input type="checkbox" id="scanHistoryChk" />
       Scan full history
     </label>
@@ -709,42 +590,55 @@
   const sendBtn       = document.getElementById('sendBtn');
   const typingRow     = document.getElementById('typingRow');
   const toast         = document.getElementById('toast');
-  const scanList      = document.getElementById('scanList');
-  const scanEmpty     = document.getElementById('scanEmpty');
+  const airsRequest   = document.getElementById('airsRequest');
+  const airsResponse  = document.getElementById('airsResponse');
   const scanHistoryChk= document.getElementById('scanHistoryChk');
   const scanModeToggle= document.getElementById('scanModeToggle');
   const sessionDisplay= document.getElementById('sessionIdDisplay');
+  const showFullRequestChk = document.getElementById('showFullRequestChk');
 
   let history    = [];
   let sessionId  = newSessionId();
   let toastTimer;
-  let scanStats  = { allow: 0, block: 0, skip: 0, total: 0 };
+  let requestCount = 0;
+  let responseCount = 0;
+  let panProfileName = 'default';
+  let panProfileId = '';
+  let panAppName = 'web-chatbot'; // Default, will be updated from /health
+  let claudeModel = 'claude-haiku-4-5';
+  let panApiUrl = 'https://service.api.aisecurity.paloaltonetworks.com';
+  let panApiKey = '***';
+  let lastRequestData = null; // Store last request to re-render on checkbox change
 
-  // Initialise session display
   sessionDisplay.textContent = sessionId;
+  sessionDisplay.title = sessionId;
 
   function newSessionId() {
-    // Short 8-char ID shown in UI; full UUID sent to backend
-    const full = crypto.randomUUID();
-    return full;
+    return crypto.randomUUID();
   }
 
   function shortId(id) {
     return id ? id.slice(0, 8) : '—';
   }
 
-  // ── Scan history checkbox styling ──
   scanHistoryChk.addEventListener('change', () => {
     scanModeToggle.classList.toggle('active', scanHistoryChk.checked);
   });
 
-  // ── New Session button ──
+  // Re-render request display when "Full Request" checkbox changes
+  showFullRequestChk.addEventListener('change', () => {
+    if (lastRequestData) {
+      displayAIRSRequest(lastRequestData.payload, lastRequestData.inspMode, lastRequestData.promptText);
+    }
+  });
+
   document.getElementById('newSessionBtn').addEventListener('click', startNewSession);
 
   function startNewSession() {
     history   = [];
     sessionId = newSessionId();
     sessionDisplay.textContent = sessionId;
+    sessionDisplay.title = sessionId;
     document.getElementById('welcome')?.remove();
     insertSessionDivider(sessionId);
     promptEl.focus();
@@ -765,7 +659,6 @@
     scrollBottom();
   }
 
-  // ── Auto-resize textarea ──
   promptEl.addEventListener('input', () => {
     promptEl.style.height = 'auto';
     promptEl.style.height = Math.min(promptEl.scrollHeight, 150) + 'px';
@@ -775,22 +668,21 @@
   });
   sendBtn.addEventListener('click', sendMessage);
 
-  document.getElementById('clearScans').addEventListener('click', () => {
-    scanStats = { allow: 0, block: 0, skip: 0, total: 0 };
-    updateStats();
-    scanList.innerHTML = '';
-    scanList.appendChild(scanEmpty);
-    scanEmpty.style.display = '';
-  });
-
   // ── Load health on startup ──
   async function loadStatus() {
     try {
       const res  = await fetch('/health');
       const data = await res.json();
 
+      // Store configuration for use in AIRS request display
+      panProfileName = data.pan_profile || 'default';
+      panProfileId = data.pan_profile_id || '';
+      panAppName = data.pan_app_name || 'web-chatbot';
+      claudeModel = data.model || 'claude-haiku-4-5';
+      panApiUrl = data.pan_url || 'https://service.api.aisecurity.paloaltonetworks.com';
+
       document.getElementById('modelBadge').textContent =
-        (data.model || 'claude-haiku-4-5').replace('claude-', '').replace(/-/g, ' ');
+        claudeModel.replace('claude-', '').replace(/-/g, ' ');
 
       const panBadge = document.getElementById('panBadge');
       const panText  = document.getElementById('panBadgeText');
@@ -849,15 +741,21 @@
     const sentAt   = new Date();
     const inspMode = scanHistoryChk.checked ? 'full_history' : 'prompt_only';
 
+    // Build the AIRS request payload
+    const requestPayload = {
+      messages:         history,
+      pan_inspect_mode: inspMode,
+      session_id:       sessionId,
+    };
+
+    // Show the request immediately
+    displayAIRSRequest(requestPayload, inspMode, text);
+
     try {
       const res  = await fetch('/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages:         history,
-          pan_inspect_mode: inspMode,
-          session_id:       sessionId,
-        }),
+        body: JSON.stringify(requestPayload),
       });
       const data = await res.json();
       showTyping(false);
@@ -866,11 +764,10 @@
         const detail = data.detail || {};
         const pan = (typeof detail === 'object' && detail.pan) ? detail.pan : null;
 
-        // Remove blocked message from history so it doesn't cascade into future scans
         history.pop();
 
         if (pan) {
-          addScanEntry({ pan, promptText: text, sentAt, inspMode });
+          displayAIRSResponse(pan, text, inspMode);
         }
 
         if (typeof detail === 'object' && detail.error === 'prompt_blocked') {
@@ -884,9 +781,8 @@
       history.push({ role: 'assistant', content: data.response });
       appendChatMessage('claude', data.response);
 
-      // Add scan entry to sidebar
       if (data.pan) {
-        addScanEntry({ pan: data.pan, promptText: text, sentAt, inspMode });
+        displayAIRSResponse(data.pan, text, inspMode);
       }
 
     } catch (err) {
@@ -900,112 +796,190 @@
     }
   }
 
-  // ── Add entry to sidebar ──
-  function addScanEntry({ pan, promptText, sentAt, inspMode }) {
-    scanEmpty.style.display = 'none';
+  // ── Display AIRS Request ──
+  function displayAIRSRequest(payload, inspMode, promptText) {
+    // Only increment count on first call (not when toggling checkbox)
+    if (!lastRequestData || lastRequestData.timestamp !== new Date().toLocaleString()) {
+      requestCount++;
+      document.getElementById('requestCount').textContent = requestCount;
+    }
 
-    // Determine display state
-    let verdictClass, verdictIcon, verdictLabel, labelClass;
+    const timestamp = new Date().toLocaleString();
+
+    // Determine what's being sent to AIRS
+    let airsPromptText;
+    if (inspMode === 'full_history') {
+      airsPromptText = payload.messages.map(m => `[${m.role}]: ${m.content}`).join('\n');
+    } else {
+      airsPromptText = promptText;
+    }
+
+    // Build ai_profile object
+    const aiProfile = {
+      profile_name: panProfileName
+    };
+    if (panProfileId) {
+      aiProfile.profile_id = panProfileId;
+    }
+
+    const airsPayload = {
+      tr_id: "auto-generated-uuid",
+      session_id: sessionId,
+      ai_profile: aiProfile,
+      metadata: {
+        app_name: panAppName,
+        ai_model: claudeModel,
+      },
+      contents: [{ prompt: airsPromptText }]
+    };
+
+    // Store for re-rendering when checkbox changes
+    lastRequestData = { payload, inspMode, promptText, timestamp };
+
+    const showFullRequest = showFullRequestChk.checked;
+
+    if (showFullRequest) {
+      // Show complete HTTP request
+      const fullRequest = `POST ${panApiUrl}/v1/scan/sync/request HTTP/1.1
+Host: ${new URL(panApiUrl).host}
+Content-Type: application/json
+x-pan-token: ${panApiKey}
+
+${JSON.stringify(airsPayload, null, 2)}`;
+
+      airsRequest.innerHTML = `
+        <div class="info-card">
+          <div class="info-row">
+            <div class="info-label">Timestamp</div>
+            <div class="info-value">${timestamp}</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">Method</div>
+            <div class="info-value">POST</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">URL</div>
+            <div class="info-value">${panApiUrl}/v1/scan/sync/request</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">Inspect Mode</div>
+            <div class="info-value">${inspMode === 'full_history' ? '📋 Full History' : '💬 Prompt Only'}</div>
+          </div>
+        </div>
+
+        <div class="section-title">Complete HTTP Request</div>
+        <div class="json-display">${escHtml(fullRequest)}</div>
+
+        <div class="section-title" style="margin-top:16px">Request Headers</div>
+        <div class="info-card">
+          <div class="info-row">
+            <div class="info-label">Content-Type</div>
+            <div class="info-value">application/json</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">x-pan-token</div>
+            <div class="info-value">${panApiKey}</div>
+          </div>
+        </div>
+
+        <div class="section-title" style="margin-top:16px">Request Body (JSON)</div>
+        <div class="json-display">${syntaxHighlight(JSON.stringify(airsPayload, null, 2))}</div>
+      `;
+    } else {
+      // Show just the payload (original view)
+      airsRequest.innerHTML = `
+        <div class="info-card">
+          <div class="info-row">
+            <div class="info-label">Timestamp</div>
+            <div class="info-value">${timestamp}</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">Session ID</div>
+            <div class="info-value">${sessionId}</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">Inspect Mode</div>
+            <div class="info-value">${inspMode === 'full_history' ? '📋 Full History' : '💬 Prompt Only'}</div>
+          </div>
+        </div>
+
+        <div class="section-title">Request Payload to Prisma AIRS</div>
+        <div class="json-display">${syntaxHighlight(JSON.stringify(airsPayload, null, 2))}</div>
+
+        <div class="section-title" style="margin-top:16px">Original Prompt Sent</div>
+        <div class="json-display">${escHtml(airsPromptText)}</div>
+      `;
+    }
+  }
+
+  // ── Display AIRS Response ──
+  function displayAIRSResponse(pan, promptText, inspMode) {
+    responseCount++;
+    document.getElementById('responseCount').textContent = responseCount;
+
+    const timestamp = new Date().toLocaleString();
+
+    let verdictClass, verdictIcon, verdictText;
     if (!pan.was_scanned) {
       verdictClass = 'verdict-skip';
-      verdictIcon  = '⚠';
-      verdictLabel = pan.error ? 'Error / Fail-Open' : 'Skipped';
-      labelClass   = 'label-skip';
-      scanStats.skip++;
+      verdictIcon = '⚠';
+      verdictText = 'Skipped (Fail-Open)';
     } else if (pan.verdict === 'block') {
       verdictClass = 'verdict-block';
-      verdictIcon  = '✕';
-      verdictLabel = 'Blocked';
-      labelClass   = 'label-block';
-      scanStats.block++;
+      verdictIcon = '✕';
+      verdictText = 'BLOCKED';
     } else {
       verdictClass = 'verdict-allow';
-      verdictIcon  = '✓';
-      verdictLabel = 'Allowed';
-      labelClass   = 'label-allow';
-      scanStats.allow++;
+      verdictIcon = '✓';
+      verdictText = 'ALLOWED';
     }
-    scanStats.total++;
-    updateStats();
 
-    const timeStr = sentAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    const preview = promptText.length > 55 ? promptText.slice(0, 55) + '…' : promptText;
-
-    // Build card
-    const card = document.createElement('div');
-    card.className = 'scan-card';
-
-    card.innerHTML = `
-      <div class="scan-card-header">
-        <div class="scan-verdict-icon ${verdictClass}">${verdictIcon}</div>
-        <div class="scan-card-main">
-          <div class="scan-card-top">
-            <span class="scan-verdict-label ${labelClass}">${verdictLabel}</span>
-            <span class="scan-time">${timeStr}</span>
+    airsResponse.innerHTML = `
+      <div class="info-card">
+        <div class="info-row">
+          <div class="info-label">Timestamp</div>
+          <div class="info-value">${timestamp}</div>
+        </div>
+        <div class="info-row">
+          <div class="info-label">Verdict</div>
+          <div class="info-value">
+            <span class="verdict-badge ${verdictClass}">${verdictIcon} ${verdictText}</span>
           </div>
-          <div class="scan-prompt-preview">${escHtml(preview)}</div>
         </div>
-        <div class="scan-chevron">▼</div>
+        <div class="info-row">
+          <div class="info-label">Was Scanned</div>
+          <div class="info-value">${pan.was_scanned ? 'Yes ✓' : 'No (fail-open)'}</div>
+        </div>
+        ${pan.scan_id ? `
+        <div class="info-row">
+          <div class="info-label">Scan ID</div>
+          <div class="info-value">${pan.scan_id}</div>
+        </div>` : ''}
+        ${pan.category ? `
+        <div class="info-row">
+          <div class="info-label">Category</div>
+          <div class="info-value">${pan.category}</div>
+        </div>` : ''}
+        ${pan.reason ? `
+        <div class="info-row">
+          <div class="info-label">Reason</div>
+          <div class="info-value">${escHtml(pan.reason)}</div>
+        </div>` : ''}
+        ${pan.error ? `
+        <div class="info-row">
+          <div class="info-label">Error</div>
+          <div class="info-value" style="color:var(--red)">${escHtml(pan.error)}</div>
+        </div>` : ''}
       </div>
 
-      <div class="scan-card-detail">
-        <div class="detail-section-title">Scan Result</div>
-        <div class="detail-grid">
-          ${detailRow('Inspected',
-              pan.was_scanned ? 'Yes — real AIRS scan' : 'No — skipped',
-              pan.was_scanned ? 'green' : 'yellow')}
-          ${detailRow('Verdict',
-              pan.verdict || '—',
-              pan.verdict === 'allow' ? 'green' : pan.verdict === 'block' ? 'red' : '')}
-          ${pan.scan_id   ? detailRow('Scan ID',   pan.scan_id,   'mono') : ''}
-          ${pan.category  ? detailRow('Category',  pan.category,  '')     : ''}
-          ${pan.reason    ? detailRow('Reason',    pan.reason,    '')     : ''}
-          ${pan.error     ? detailRow('Error',     pan.error,     'red')  : ''}
-        </div>
-
-        <div class="detail-section-title" style="margin-top:10px">Prompt Sent to PAN</div>
-        <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px">
-          Mode: <strong style="color:${inspMode==='full_history'?'#a78bfa':'var(--text)'}">
-            ${inspMode === 'full_history' ? '📋 Full conversation history' : '💬 Latest prompt only'}
-          </strong>
-        </div>
-        <div class="prompt-full">${escHtml(promptText)}</div>
-
-        ${pan.raw_response ? `
-          <div class="raw-toggle" onclick="toggleRaw(this)">▶ Raw AIRS response</div>
-          <pre class="raw-json">${escHtml(JSON.stringify(pan.raw_response, null, 2))}</pre>
-        ` : ''}
-      </div>
+      ${pan.raw_response ? `
+        <div class="section-title">Full AIRS Response (Raw JSON)</div>
+        <div class="json-display">${syntaxHighlight(JSON.stringify(pan.raw_response, null, 2))}</div>
+      ` : `
+        <div class="section-title">AIRS Response</div>
+        <div class="json-display">${syntaxHighlight(JSON.stringify(pan, null, 2))}</div>
+      `}
     `;
-
-    card.querySelector('.scan-card-header').addEventListener('click', () => {
-      card.classList.toggle('expanded');
-    });
-
-    // Newest at top
-    scanList.insertBefore(card, scanList.firstChild);
-  }
-
-  function detailRow(label, value, cls) {
-    return `<div class="detail-row">
-      <span class="detail-label">${label}</span>
-      <span class="detail-val ${cls}">${escHtml(String(value))}</span>
-    </div>`;
-  }
-
-  function toggleRaw(el) {
-    const raw = el.nextElementSibling;
-    raw.classList.toggle('open');
-    el.textContent = raw.classList.contains('open')
-      ? '▼ Raw AIRS response'
-      : '▶ Raw AIRS response';
-  }
-
-  function updateStats() {
-    document.getElementById('scanCount').textContent = scanStats.total;
-    document.getElementById('statAllow').textContent = scanStats.allow;
-    document.getElementById('statBlock').textContent = scanStats.block;
-    document.getElementById('statSkip').textContent  = scanStats.skip;
   }
 
   // ── Chat helpers ──
@@ -1047,6 +1021,25 @@
   }
   function escHtml(s) {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function syntaxHighlight(json) {
+    json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+      let cls = 'json-number';
+      if (/^"/.test(match)) {
+        if (/:$/.test(match)) {
+          cls = 'json-key';
+        } else {
+          cls = 'json-string';
+        }
+      } else if (/true|false/.test(match)) {
+        cls = 'json-boolean';
+      } else if (/null/.test(match)) {
+        cls = 'json-null';
+      }
+      return '<span class="' + cls + '">' + match + '</span>';
+    });
   }
 </script>
 </body>

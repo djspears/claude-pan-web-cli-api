@@ -109,6 +109,8 @@ async def health():
         pan_status=_pan_status,
         pan_url=pan.base_url if pan else None,
         pan_profile=pan.profile_name if pan else None,
+        pan_profile_id=pan.profile_id if pan else None,
+        pan_app_name=pan.app_name if pan else None,
         pan_error=_pan_error,
     )
 

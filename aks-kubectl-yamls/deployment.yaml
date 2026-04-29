@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: claude-pan-proxy
+  namespace: claude-pan-airs
+  labels:
+    app: claude-pan-proxy
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: claude-pan-proxy
+  template:
+    metadata:
+      labels:
+        app: claude-pan-proxy
+    spec:
+      containers:
+      - name: claude-pan-proxy
+        # Update YOUR_DOCKER_USERNAME with your Docker Hub username
+        image: YOUR_DOCKER_USERNAME/claude-pan-web-cli-api:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        # Secrets
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: claude-pan-secrets
+              key: ANTHROPIC_API_KEY
+        - name: PAN_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: claude-pan-secrets
+              key: PAN_API_KEY
+        - name: PAN_PROFILE_NAME
+          valueFrom:
+            secretKeyRef:
+              name: claude-pan-secrets
+              key: PAN_PROFILE_NAME
+        - name: PAN_PROFILE_ID
+          valueFrom:
+            secretKeyRef:
+              name: claude-pan-secrets
+              key: PAN_PROFILE_ID
+        # ConfigMap
+        - name: PAN_API_URL
+          valueFrom:
+            configMapKeyRef:
+              name: claude-pan-config
+              key: PAN_API_URL
+        - name: PAN_APP_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: claude-pan-config
+              key: PAN_APP_NAME
+        - name: PAN_TIMEOUT
+          valueFrom:
+            configMapKeyRef:
+              name: claude-pan-config
+              key: PAN_TIMEOUT
+        - name: PAN_SCAN_RESPONSES
+          valueFrom:
+            configMapKeyRef:
+              name: claude-pan-config
+              key: PAN_SCAN_RESPONSES
+        - name: CLAUDE_MODEL
+          valueFrom:
+            configMapKeyRef:
+              name: claude-pan-config
+              key: CLAUDE_MODEL
+        - name: LOG_LEVEL
+          valueFrom:
+            configMapKeyRef:
+              name: claude-pan-config
+              key: LOG_LEVEL
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"

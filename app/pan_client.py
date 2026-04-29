@@ -31,8 +31,9 @@ logger = logging.getLogger(__name__)
 
 PAN_API_KEY      = os.getenv("PAN_API_KEY", "")
 PAN_API_URL      = os.getenv("PAN_API_URL", "https://service.api.aisecurity.paloaltonetworks.com").rstrip("/")
-PAN_APP_NAME     = os.getenv("PAN_APP_NAME", "claude-proxy")
+PAN_APP_NAME     = os.getenv("PAN_APP_NAME", "web-chatbot")
 PAN_PROFILE_NAME = os.getenv("PAN_PROFILE_NAME", "default")
+PAN_PROFILE_ID   = os.getenv("PAN_PROFILE_ID", "")
 PAN_TIMEOUT      = float(os.getenv("PAN_TIMEOUT", "10"))
 
 
@@ -44,6 +45,7 @@ class PANClient:
         self.base_url     = PAN_API_URL
         self.app_name     = PAN_APP_NAME
         self.profile_name = PAN_PROFILE_NAME
+        self.profile_id   = PAN_PROFILE_ID
         self.enabled      = bool(self.api_key)
 
     def _headers(self) -> dict:
@@ -58,15 +60,30 @@ class PANClient:
             "app_name": self.app_name,
             "ai_model": "claude-haiku-4-5",
         }
+
+        # Extract session_id/conversation_id for top-level, keep rest in metadata
+        session_id = None
         if extra_meta:
+            session_id = extra_meta.pop("conversation_id", None)
             metadata.update(extra_meta)
 
-        return {
+        # Build ai_profile with both profile_id and profile_name
+        ai_profile = {"profile_name": self.profile_name}
+        if self.profile_id:
+            ai_profile["profile_id"] = self.profile_id
+
+        payload = {
             "tr_id": tr_id,
-            "profile": {"name": self.profile_name},
+            "ai_profile": ai_profile,
             "metadata": metadata,
             "contents": [{"prompt": prompt}],
         }
+
+        # Add session_id at top level if provided
+        if session_id:
+            payload["session_id"] = session_id
+
+        return payload
 
     def _response_payload(self, response_text: str, tr_id: str, extra_meta: Optional[dict] = None) -> dict:
         """Build a correctly structured AIRS response scan payload."""
@@ -74,15 +91,30 @@ class PANClient:
             "app_name": self.app_name,
             "ai_model": "claude-haiku-4-5",
         }
+
+        # Extract session_id/conversation_id for top-level, keep rest in metadata
+        session_id = None
         if extra_meta:
+            session_id = extra_meta.pop("conversation_id", None)
             metadata.update(extra_meta)
 
-        return {
+        # Build ai_profile with both profile_id and profile_name
+        ai_profile = {"profile_name": self.profile_name}
+        if self.profile_id:
+            ai_profile["profile_id"] = self.profile_id
+
+        payload = {
             "tr_id": tr_id,
-            "profile": {"name": self.profile_name},
+            "ai_profile": ai_profile,
             "metadata": metadata,
             "contents": [{"response": response_text}],
         }
+
+        # Add session_id at top level if provided
+        if session_id:
+            payload["session_id"] = session_id
+
+        return payload
 
     def _parse_response(self, data: dict) -> Tuple[PANVerdict, Optional[str]]:
         """Extract verdict and action from an AIRS scan response."""

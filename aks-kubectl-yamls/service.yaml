@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: claude-pan-proxy
+  namespace: claude-pan-airs
+  labels:
+    app: claude-pan-proxy
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  selector:
+    app: claude-pan-proxy

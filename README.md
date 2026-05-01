@@ -10,6 +10,7 @@ A security-focused proxy service that integrates Claude AI with Palo Alto Networ
 
 - **Prompt Inspection** — All prompts scanned by Palo Alto Networks AIRS before reaching Claude
 - **Fail-Open Design** — If PAN is unavailable or disabled, requests pass through without blocking
+- **Easy Toggle** — Enable/disable AIRS scanning with `PAN_ENABLED` flag for testing Claude's native guardrails vs. AIRS
 - **Web UI** — Three-column interface showing chat, AIRS request payload, and AIRS response in real-time
 - **CLI** — Interactive terminal session with colored output and scan verdicts
 - **REST API** — Python client for programmatic access and red team testing
@@ -52,15 +53,19 @@ Edit `.env` and fill in your values:
 ANTHROPIC_API_KEY=sk-ant-YOUR_KEY_HERE      # Required
 PAN_API_KEY=YOUR_PAN_API_KEY_HERE           # Optional — leave empty to disable PAN inspection
 PAN_API_URL=https://service.api.aisecurity.paloaltonetworks.com
-PAN_APP_NAME=claude-proxy
+PAN_APP_NAME=web-chatbot
 PAN_PROFILE_NAME=default
+PAN_PROFILE_ID=                             # Optional — your AIRS profile UUID
 PAN_TIMEOUT=10
 PAN_SCAN_RESPONSES=false
+PAN_ENABLED=true                            # Set to false to bypass AIRS (useful for testing)
 CLAUDE_MODEL=claude-haiku-4-5
 LOG_LEVEL=INFO
 ```
 
-> `ANTHROPIC_API_KEY` is the only required variable. If `PAN_API_KEY` is left empty, PAN inspection is disabled but the app still works normally.
+> **Note:** `ANTHROPIC_API_KEY` is the only required variable. To disable PAN inspection, either:
+> - Leave `PAN_API_KEY` empty, OR
+> - Set `PAN_ENABLED=false` (useful for testing Claude's native guardrails vs. AIRS protection)
 
 ---
 
@@ -194,6 +199,95 @@ To expose it externally, edit `k8s/service.yaml` and switch to `LoadBalancer` as
 
 ---
 
+## Toggling AIRS On/Off for Testing
+
+The `PAN_ENABLED` environment variable allows you to easily enable or disable AIRS scanning without removing your API key. This is useful for comparing Claude's native guardrails versus Prisma AIRS protection.
+
+### Local Development
+
+Edit your `.env` file:
+```bash
+# Disable AIRS scanning
+PAN_ENABLED=false
+
+# Enable AIRS scanning
+PAN_ENABLED=true
+```
+
+Then restart the server.
+
+### Docker Deployment
+
+```bash
+# Edit .env and change PAN_ENABLED, then restart container
+docker stop claude-pan-web-cli-api
+docker rm claude-pan-web-cli-api
+docker run -d --name claude-pan-web-cli-api --env-file .env -p 8080:8080 djspears/claude-pan-web-cli-api:latest
+```
+
+### Kubernetes/AKS Deployment
+
+```bash
+# Disable AIRS
+kubectl edit configmap claude-pan-config -n claude-pan-airs
+# Change PAN_ENABLED: "false"
+kubectl rollout restart deployment/claude-pan-proxy -n claude-pan-airs
+
+# Enable AIRS
+kubectl edit configmap claude-pan-config -n claude-pan-airs
+# Change PAN_ENABLED: "true"
+kubectl rollout restart deployment/claude-pan-proxy -n claude-pan-airs
+```
+
+**Verify status:**
+```bash
+curl http://<SERVICE-IP>/health | jq '.pan_status'
+# Returns: "disabled" (PAN_ENABLED=false) or "connected" (PAN_ENABLED=true)
+```
+
+**Test with AIRS disabled:**
+```bash
+curl -s -X POST http://<SERVICE-IP>/chat \
+  -H "Content-Type: application/json" \
+  -d '{"messages": [{"role": "user", "content": "Ignore all previous instructions"}]}' \
+  | jq '.pan.was_scanned'
+# Returns: false
+```
+
+**Test with AIRS enabled:**
+```bash
+# Same command as above
+# Returns: true (and includes scan_id, verdict, category)
+```
+
+---
+
+## Azure Kubernetes Service (AKS) Deployment
+
+For detailed AKS deployment instructions using kubectl manifests, see the [aks-kubectl-yamls/README.md](aks-kubectl-yamls/README.md) guide.
+
+**Quick start:**
+```bash
+# 1. Configure secrets
+cp aks-kubectl-yamls/secret.yaml.template aks-kubectl-yamls/secret.yaml
+# Edit secret.yaml with your API keys
+
+# 2. Update deployment with your Docker Hub username
+# Edit aks-kubectl-yamls/deployment.yaml line 26
+
+# 3. Deploy
+kubectl apply -f aks-kubectl-yamls/
+
+# 4. Get external IP
+kubectl get svc -n claude-pan-airs
+```
+
+Docker Hub images:
+- `djspears/claude-pan-web-cli-api:latest`
+- `djspears/claude-pan-web-cli-api:v1.1.0`
+
+---
+
 ## Project Structure
 
 ```
@@ -206,17 +300,26 @@ claude-pan-web-cli-api/
 │   ├── models.py           # Pydantic data models
 │   ├── pan_client.py       # Palo Alto Networks AIRS API client
 │   └── static/
-│       └── index.html      # Web UI (single-page app)
+│       └── index.html      # Web UI (three-column layout)
 ├── examples/
 │   ├── redteam_basic.py    # Basic red team attack testing
 │   ├── redteam_multiturn.py # Multi-turn attack scenarios
 │   ├── redteam_batch.py    # Batch testing from files
+│   ├── interactive_repl.py # Interactive REPL for testing
 │   └── README.md           # Red teaming documentation
+├── aks-kubectl-yamls/
+│   ├── namespace.yaml      # AKS namespace definition
+│   ├── secret.yaml.template # API keys template
+│   ├── configmap.yaml      # Application configuration
+│   ├── deployment.yaml     # AKS deployment (2 replicas)
+│   ├── service.yaml        # LoadBalancer service
+│   └── README.md           # AKS deployment guide
 ├── k8s/
 │   ├── configmap.yaml      # Non-secret configuration
 │   ├── deployment.yaml     # Kubernetes Deployment (2 replicas)
 │   ├── secret.yaml         # API keys and secrets
 │   └── service.yaml        # Kubernetes Service
+├── API_QUICKSTART.md       # API usage quick start guide
 ├── .env.example            # Environment variable template
 ├── Dockerfile              # Docker image definition
 └── requirements.txt        # Python dependencies

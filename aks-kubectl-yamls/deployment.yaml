@@ -23,7 +23,7 @@ spec:
       containers:
       - name: claude-pan-proxy
         # Update YOUR_DOCKER_USERNAME with your Docker Hub username
-        image: YOUR_DOCKER_USERNAME/claude-pan-web-cli-api:latest
+        image: djspears/claude-pan-web-cli-api:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8080

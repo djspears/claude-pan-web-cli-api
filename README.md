@@ -262,9 +262,11 @@ curl -s -X POST http://<SERVICE-IP>/chat \
 
 ---
 
-## Azure Kubernetes Service (AKS) Deployment
+## Cloud Kubernetes Deployment
 
-For detailed AKS deployment instructions using kubectl manifests, see the [aks-kubectl-yamls/README.md](aks-kubectl-yamls/README.md) guide.
+### Azure Kubernetes Service (AKS)
+
+For detailed AKS deployment instructions, see [aks-kubectl-yamls/README.md](aks-kubectl-yamls/README.md).
 
 **Quick start:**
 ```bash
@@ -275,14 +277,43 @@ cp aks-kubectl-yamls/secret.yaml.template aks-kubectl-yamls/secret.yaml
 # 2. Update deployment with your Docker Hub username
 # Edit aks-kubectl-yamls/deployment.yaml line 26
 
-# 3. Deploy
+# 3. Deploy to AKS
+az aks get-credentials --resource-group <your-rg> --name <your-cluster>
 kubectl apply -f aks-kubectl-yamls/
 
 # 4. Get external IP
 kubectl get svc -n claude-pan-airs
 ```
 
-Docker Hub images:
+### Amazon EKS (Elastic Kubernetes Service)
+
+For detailed EKS deployment instructions, see [eks-kubectl-yamls/README.md](eks-kubectl-yamls/README.md).
+
+**Quick start:**
+```bash
+# 1. Configure secrets
+cp eks-kubectl-yamls/secret.yaml.template eks-kubectl-yamls/secret.yaml
+# Edit secret.yaml with your API keys
+
+# 2. Update deployment with your Docker Hub username
+# Edit eks-kubectl-yamls/deployment.yaml line 26
+
+# 3. Deploy to EKS
+aws eks update-kubeconfig --region <region> --name <cluster>
+kubectl apply -f eks-kubectl-yamls/
+
+# 4. Get external hostname
+kubectl get svc -n claude-pan-airs
+LB_HOST=$(kubectl get svc claude-pan-proxy -n claude-pan-airs -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
+echo "Application URL: http://$LB_HOST"
+```
+
+**Key differences:**
+- **AKS**: Uses Azure Load Balancer, returns external **IP address**
+- **EKS**: Uses AWS Elastic Load Balancer, returns external **hostname** (e.g., `*.elb.amazonaws.com`)
+- **EKS** service.yaml includes AWS-specific annotations for NLB/ALB, SSL, and security groups
+
+**Docker Hub images:**
 - `djspears/claude-pan-web-cli-api:latest`
 - `djspears/claude-pan-web-cli-api:v1.1.0`
 
@@ -312,8 +343,15 @@ claude-pan-web-cli-api/
 │   ├── secret.yaml.template # API keys template
 │   ├── configmap.yaml      # Application configuration
 │   ├── deployment.yaml     # AKS deployment (2 replicas)
-│   ├── service.yaml        # LoadBalancer service
+│   ├── service.yaml        # Azure LoadBalancer service
 │   └── README.md           # AKS deployment guide
+├── eks-kubectl-yamls/
+│   ├── namespace.yaml      # EKS namespace definition
+│   ├── secret.yaml.template # API keys template
+│   ├── configmap.yaml      # Application configuration
+│   ├── deployment.yaml     # EKS deployment (2 replicas)
+│   ├── service.yaml        # AWS LoadBalancer service (NLB/ALB)
+│   └── README.md           # EKS deployment guide
 ├── k8s/
 │   ├── configmap.yaml      # Non-secret configuration
 │   ├── deployment.yaml     # Kubernetes Deployment (2 replicas)

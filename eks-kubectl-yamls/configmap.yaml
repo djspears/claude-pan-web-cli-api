@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: claude-pan-config
+  namespace: claude-pan-airs
+data:
+  PAN_API_URL: "https://service.api.aisecurity.paloaltonetworks.com"
+  PAN_APP_NAME: "web-chatbot"
+  PAN_TIMEOUT: "10"
+  PAN_SCAN_RESPONSES: "false"
+  PAN_ENABLED: "true"
+  CLAUDE_MODEL: "claude-haiku-4-5"
+  LOG_LEVEL: "INFO"

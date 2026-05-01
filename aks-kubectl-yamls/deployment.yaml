@@ -71,6 +71,11 @@ spec:
             configMapKeyRef:
               name: claude-pan-config
               key: PAN_SCAN_RESPONSES
+        - name: PAN_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: claude-pan-config
+              key: PAN_ENABLED
         - name: CLAUDE_MODEL
           valueFrom:
             configMapKeyRef:

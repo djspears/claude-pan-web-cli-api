@@ -35,6 +35,7 @@ PAN_APP_NAME     = os.getenv("PAN_APP_NAME", "web-chatbot")
 PAN_PROFILE_NAME = os.getenv("PAN_PROFILE_NAME", "default")
 PAN_PROFILE_ID   = os.getenv("PAN_PROFILE_ID", "")
 PAN_TIMEOUT      = float(os.getenv("PAN_TIMEOUT", "10"))
+PAN_ENABLED      = os.getenv("PAN_ENABLED", "true").lower() == "true"
 
 
 class PANClient:
@@ -46,7 +47,7 @@ class PANClient:
         self.app_name     = PAN_APP_NAME
         self.profile_name = PAN_PROFILE_NAME
         self.profile_id   = PAN_PROFILE_ID
-        self.enabled      = bool(self.api_key)
+        self.enabled      = PAN_ENABLED and bool(self.api_key)
 
     def _headers(self) -> dict:
         return {

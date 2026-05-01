@@ -8,5 +8,6 @@ data:
   PAN_APP_NAME: "web-chatbot"
   PAN_TIMEOUT: "10"
   PAN_SCAN_RESPONSES: "false"
+  PAN_ENABLED: "true"
   CLAUDE_MODEL: "claude-haiku-4-5"
   LOG_LEVEL: "INFO"

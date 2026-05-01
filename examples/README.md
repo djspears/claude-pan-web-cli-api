@@ -1,6 +1,6 @@
-# Red Team Testing Examples
+# Test Prompts Examples
 
-This directory contains example scripts for programmatic red team testing with the Claude + PAN AI Security proxy.
+This directory contains example scripts for programmatic testing with the Claude + PAN AI Security proxy.
 
 ## Quick Start
 
@@ -16,7 +16,7 @@ uvicorn main:app --host 0.0.0.0 --port 8080 --workers 2
 
 ```bash
 export PYTHONPATH="${PYTHONPATH}:../app"
-python3 redteam_basic.py
+python3 test_basic.py
 ```
 
 ---
@@ -61,14 +61,14 @@ python3 interactive_repl.py --url http://remote-proxy:8080
 
 ---
 
-### `redteam_basic.py` — Basic Attack Vectors
+### `test_basic.py` — Basic Test Prompts
 
 Tests common prompt injection and jailbreak techniques.
 
 **Usage:**
 ```bash
-python3 redteam_basic.py
-python3 redteam_basic.py --url http://your-proxy:8080
+python3 test_basic.py
+python3 test_basic.py --url http://your-proxy:8080
 ```
 
 **Tests:**
@@ -96,13 +96,13 @@ python3 redteam_basic.py --url http://your-proxy:8080
 
 ---
 
-### `redteam_multiturn.py` — Multi-Turn Attacks
+### `test_multiturn.py` — Multi-Turn Test Prompts
 
 Tests sophisticated attacks that span multiple conversation turns.
 
 **Usage:**
 ```bash
-python3 redteam_multiturn.py
+python3 test_multiturn.py
 ```
 
 **Attack Scenarios:**
@@ -137,7 +137,7 @@ Result: 🚨 Attack BLOCKED at turn 3/4
 
 ---
 
-### `redteam_batch.py` — Batch Testing
+### `test_batch.py` — Batch Testing
 
 Load test prompts from a file and run them concurrently.
 
@@ -145,14 +145,14 @@ Load test prompts from a file and run them concurrently.
 
 **Create an example test file:**
 ```bash
-python3 redteam_batch.py --create-example
+python3 test_batch.py --create-example
 ```
 
 **Run batch tests:**
 ```bash
-python3 redteam_batch.py --input example_tests.json
-python3 redteam_batch.py --input prompts.csv --concurrent 5
-python3 redteam_batch.py --input tests.json --output results.json
+python3 test_batch.py --input example_tests.json
+python3 test_batch.py --input prompts.csv --concurrent 5
+python3 test_batch.py --input tests.json --output results.json
 ```
 
 **Input File Format (JSON):**

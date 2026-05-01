@@ -13,7 +13,7 @@ A security-focused proxy service that integrates Claude AI with Palo Alto Networ
 - **Easy Toggle** — Enable/disable AIRS scanning with `PAN_ENABLED` flag for testing Claude's native guardrails vs. AIRS
 - **Web UI** — Three-column interface showing chat, AIRS request payload, and AIRS response in real-time
 - **CLI** — Interactive terminal session with colored output and scan verdicts
-- **REST API** — Python client for programmatic access and red team testing
+- **REST API** — Python client for programmatic access and testing
 - **Multi-Turn Attack Detection** — Optional scanning of full conversation history
 - **Response Scanning** — Optional scanning of Claude's responses for data exfiltration
 - **Full Audit Trail** — Scan ID, verdict, category, and raw PAN response data
@@ -333,11 +333,11 @@ claude-pan-web-cli-api/
 │   └── static/
 │       └── index.html      # Web UI (three-column layout)
 ├── examples/
-│   ├── redteam_basic.py    # Basic red team attack testing
-│   ├── redteam_multiturn.py # Multi-turn attack scenarios
-│   ├── redteam_batch.py    # Batch testing from files
+│   ├── test_basic.py       # Basic test prompts
+│   ├── test_multiturn.py   # Multi-turn test scenarios
+│   ├── test_batch.py       # Batch testing from files
 │   ├── interactive_repl.py # Interactive REPL for testing
-│   └── README.md           # Red teaming documentation
+│   └── README.md           # Testing documentation
 ├── aks-kubectl-yamls/
 │   ├── namespace.yaml      # AKS namespace definition
 │   ├── secret.yaml.template # API keys template
@@ -409,23 +409,23 @@ POST /chat
 
 ---
 
-## Red Team Testing & Programmatic Access
+## Test Prompts & Programmatic Access
 
 **📖 Quick Start:** See [`API_QUICKSTART.md`](API_QUICKSTART.md) for a fast introduction to API testing.
 
-The `examples/` directory contains Python scripts for red teaming with Prisma AIRS:
+The `examples/` directory contains Python scripts for testing with Prisma AIRS:
 
 ```bash
-# Basic attack vector testing
+# Basic test prompts
 export PYTHONPATH="${PYTHONPATH}:./app"
-python3 examples/redteam_basic.py
+python3 examples/test_basic.py
 
-# Multi-turn attack testing
-python3 examples/redteam_multiturn.py
+# Multi-turn test scenarios
+python3 examples/test_multiturn.py
 
 # Batch testing from file
-python3 examples/redteam_batch.py --create-example
-python3 examples/redteam_batch.py --input tests.json --output results.json
+python3 examples/test_batch.py --create-example
+python3 examples/test_batch.py --input tests.json --output results.json
 ```
 
 ### Python API Client

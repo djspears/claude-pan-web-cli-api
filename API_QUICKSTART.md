@@ -1,6 +1,6 @@
 # API Quick Start Guide
 
-Quick guide to using the Claude + PAN AI Security proxy API for red team testing.
+Quick guide to using the Claude + PAN AI Security proxy API for testing.
 
 ## Setup (One-Time)
 
@@ -63,10 +63,10 @@ Claude > [blocked or response]
 
 ---
 
-### Basic Red Team Suite
+### Basic Test Suite
 
 ```bash
-python3 examples/redteam_basic.py
+python3 examples/test_basic.py
 ```
 
 Runs 9 pre-configured tests:
@@ -77,10 +77,10 @@ Runs 9 pre-configured tests:
 
 ---
 
-### Multi-Turn Attack Testing
+### Multi-Turn Test Scenarios
 
 ```bash
-python3 examples/redteam_multiturn.py
+python3 examples/test_multiturn.py
 ```
 
 Tests sophisticated attacks that span multiple conversation turns.
@@ -97,12 +97,12 @@ python3 examples/generate_test_prompts.py --output my_tests.json
 
 **Run batch tests:**
 ```bash
-python3 examples/redteam_batch.py --input my_tests.json --output results.json
+python3 examples/test_batch.py --input my_tests.json --output results.json
 ```
 
 **Run with concurrency:**
 ```bash
-python3 examples/redteam_batch.py --input my_tests.json --concurrent 5
+python3 examples/test_batch.py --input my_tests.json --concurrent 5
 ```
 
 ---
@@ -270,7 +270,7 @@ cat > my_prompts.json << 'EOF'
 EOF
 
 # Run batch test
-python3 examples/redteam_batch.py --input my_prompts.json
+python3 examples/test_batch.py --input my_prompts.json
 ```
 
 ### 3. Test Multi-Turn Attacks

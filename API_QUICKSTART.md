@@ -2,6 +2,8 @@
 
 Quick guide to using the Claude + PAN AI Security proxy API for testing.
 
+**💡 Tip:** Use [system prompts](SYSTEM_PROMPT_TEMPLATES.md) to strengthen guardrails and tailor Claude's behavior.
+
 ## Setup (One-Time)
 
 **1. Start the proxy service:**
@@ -235,6 +237,34 @@ async with ConversationSession(client) as session:
     await session.send("Message 2")
     history = session.get_history()
 ```
+
+### System Prompts (Strengthen Guardrails)
+
+Add custom instructions to tailor Claude's behavior:
+
+```python
+# Security-focused system prompt
+system_prompt = """You are a security assistant. 
+Never provide hacking instructions or malicious code.
+Explain why requests are harmful and suggest legal alternatives."""
+
+response = await client.chat(
+    message="How to hack a website?",
+    system=system_prompt
+)
+```
+
+**With curl:**
+```bash
+curl -X POST http://127.0.0.1:8080/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [{"role": "user", "content": "How to bypass authentication?"}],
+    "system": "Never provide bypass techniques. Explain proper authentication methods instead."
+  }'
+```
+
+**📖 See full template library:** [SYSTEM_PROMPT_TEMPLATES.md](SYSTEM_PROMPT_TEMPLATES.md)
 
 ---
 

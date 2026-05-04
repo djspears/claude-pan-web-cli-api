@@ -11,6 +11,7 @@ A security-focused proxy service that integrates Claude AI with Palo Alto Networ
 - **Prompt Inspection** — All prompts scanned by Palo Alto Networks AIRS before reaching Claude
 - **Fail-Open Design** — If PAN is unavailable or disabled, requests pass through without blocking
 - **Easy Toggle** — Enable/disable AIRS scanning with `PAN_ENABLED` flag for testing Claude's native guardrails vs. AIRS
+- **System Prompts** — Tailor Claude's behavior and strengthen guardrails with custom system prompts (9 built-in templates)
 - **Web UI** — Three-column interface showing chat, AIRS request payload, and AIRS response in real-time
 - **CLI** — Interactive terminal session with colored output and scan verdicts
 - **REST API** — Python client for programmatic access and testing
@@ -358,6 +359,7 @@ claude-pan-web-cli-api/
 │   ├── secret.yaml         # API keys and secrets
 │   └── service.yaml        # Kubernetes Service
 ├── API_QUICKSTART.md       # API usage quick start guide
+├── SYSTEM_PROMPT_TEMPLATES.md # System prompt templates and best practices
 ├── .env.example            # Environment variable template
 ├── Dockerfile              # Docker image definition
 └── requirements.txt        # Python dependencies
@@ -406,6 +408,92 @@ POST /chat
   }
 }
 ```
+
+---
+
+## System Prompts (Strengthening Guardrails)
+
+System prompts guide Claude's behavior and strengthen security guardrails. They work **in addition to** PAN AIRS scanning and Claude's built-in safety features.
+
+### Layered Defense
+
+**Three layers of protection:**
+1. **PAN AIRS** - First line of defense (blocks malicious prompts before reaching Claude)
+2. **System Prompts** - Tailors Claude's behavior for your use case
+3. **Claude's Native Guardrails** - Built-in safety measures
+
+### Using System Prompts
+
+**Web UI:**
+1. Click **⚙️ System Prompt** button in the toolbar
+2. Select a template (Security-Focused, Enterprise, Educational) or write custom
+3. Send messages - system prompt applies to all responses
+
+**API (curl):**
+```bash
+curl -X POST http://localhost:8080/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [{"role": "user", "content": "How to hack a website?"}],
+    "system": "You are a security assistant. Never provide hacking instructions. Explain why unauthorized access is illegal and suggest legal alternatives like bug bounty programs."
+  }'
+```
+
+**Python API:**
+```python
+response = await client.chat(
+    message="Your question",
+    system="Your system prompt here"
+)
+```
+
+### Built-in Templates
+
+**9 ready-to-use templates available:**
+- **Security-Focused** - General security hardening for public-facing apps
+- **Enterprise/Corporate** - Compliance requirements, no confidential data
+- **Educational/Research** - Cybersecurity training, defensive focus
+- **Healthcare/HIPAA** - HIPAA compliance, no PHI processing
+- **Financial Services** - Regulatory compliance, no investment advice
+- **Customer Service** - Support chatbots with escalation paths
+- **Code Review Assistant** - Security vulnerability detection
+- **Content Moderation** - Strict content policies
+- **Penetration Testing** - Authorized security assessments only (⚠️ controlled environments)
+
+**📖 Full template details:** See [`SYSTEM_PROMPT_TEMPLATES.md`](SYSTEM_PROMPT_TEMPLATES.md)
+
+### Example: Testing Guardrails
+
+**Without system prompt:**
+```bash
+curl -X POST http://localhost:8080/chat \
+  -d '{"messages": [{"role": "user", "content": "How to bypass authentication?"}]}'
+# May provide general information
+```
+
+**With system prompt:**
+```bash
+curl -X POST http://localhost:8080/chat \
+  -d '{
+    "messages": [{"role": "user", "content": "How to bypass authentication?"}],
+    "system": "Never provide bypass techniques for security controls. Explain proper authentication methods instead."
+  }'
+# Refuses and provides secure alternatives
+```
+
+### Best Practices
+
+✅ **DO:**
+- Be specific about prohibited actions
+- Provide alternatives for refused requests
+- Test prompts with `examples/test_basic.py`
+- Keep prompts concise (150-300 words)
+- Update based on observed attack patterns
+
+❌ **DON'T:**
+- Use vague guidance like "be safe"
+- Write extremely long prompts (reduces effectiveness)
+- Rely solely on system prompts (use layered defense)
 
 ---
 

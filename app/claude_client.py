@@ -56,6 +56,7 @@ class ClaudeClient:
 
         if system:
             kwargs["system"] = system
+            logger.info("Sending system prompt to Claude API (preview: %s...)", system[:100])
 
         response = await self.client.messages.create(**kwargs)
 

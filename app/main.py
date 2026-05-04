@@ -188,6 +188,8 @@ async def chat(request: Request, body: ChatRequest):
     )
 
     # ── Step 2: Forward to Claude ───────────────────────────────────────────
+    if body.system:
+        logger.info("Using system prompt (length=%d chars)", len(body.system))
     try:
         response_text = await claude.chat(
             messages=body.messages,

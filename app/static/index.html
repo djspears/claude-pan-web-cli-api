@@ -552,11 +552,11 @@
     </div>
   </div>
 
-  <!-- Column 2: AIRS Request -->
+  <!-- Column 2: AIRS Request & Claude Request -->
   <div class="column">
     <div class="column-header">
       <span class="column-icon">📤</span>
-      <span class="column-title">Prisma AIRS Request</span>
+      <span class="column-title">API Requests</span>
       <label class="column-toggle" title="Show complete HTTP request with headers">
         <input type="checkbox" id="showFullRequestChk" />
         <span>Full Request</span>
@@ -567,7 +567,7 @@
       <div class="empty-state">
         <div class="empty-icon">📤</div>
         <div>No requests yet</div>
-        <div style="margin-top:8px;font-size:11px;">Send a message to see the API payload</div>
+        <div style="margin-top:8px;font-size:11px;">Send a message to see the API payloads</div>
       </div>
     </div>
   </div>
@@ -981,13 +981,31 @@ Instead, explain the concept theoretically and discuss proper defenses.`
     const showFullRequest = showFullRequestChk.checked;
 
     if (showFullRequest) {
+      // Build Claude API request payload
+      const claudePayload = {
+        model: claudeModel,
+        max_tokens: 16000,
+        messages: payload.messages
+      };
+      if (payload.system) {
+        claudePayload.system = payload.system;
+      }
+
       // Show complete HTTP request
-      const fullRequest = `POST ${panApiUrl}/v1/scan/sync/request HTTP/1.1
+      const fullAIRSRequest = `POST ${panApiUrl}/v1/scan/sync/request HTTP/1.1
 Host: ${new URL(panApiUrl).host}
 Content-Type: application/json
 x-pan-token: ${panApiKey}
 
 ${JSON.stringify(airsPayload, null, 2)}`;
+
+      const fullClaudeRequest = `POST https://api.anthropic.com/v1/messages HTTP/1.1
+Host: api.anthropic.com
+Content-Type: application/json
+x-api-key: [ANTHROPIC_API_KEY]
+anthropic-version: 2023-06-01
+
+${JSON.stringify(claudePayload, null, 2)}`;
 
       airsRequest.innerHTML = `
         <div class="info-card">
@@ -996,23 +1014,15 @@ ${JSON.stringify(airsPayload, null, 2)}`;
             <div class="info-value">${timestamp}</div>
           </div>
           <div class="info-row">
-            <div class="info-label">Method</div>
-            <div class="info-value">POST</div>
-          </div>
-          <div class="info-row">
-            <div class="info-label">URL</div>
-            <div class="info-value">${panApiUrl}/v1/scan/sync/request</div>
-          </div>
-          <div class="info-row">
             <div class="info-label">Inspect Mode</div>
             <div class="info-value">${inspMode === 'full_history' ? '📋 Full History' : '💬 Prompt Only'}</div>
           </div>
         </div>
 
-        <div class="section-title">Complete HTTP Request</div>
-        <div class="json-display">${escHtml(fullRequest)}</div>
+        <div class="section-title">🛡️ Complete HTTP Request to Prisma AIRS</div>
+        <div class="json-display">${escHtml(fullAIRSRequest)}</div>
 
-        <div class="section-title" style="margin-top:16px">Request Headers</div>
+        <div class="section-title" style="margin-top:16px">Request Headers (AIRS)</div>
         <div class="info-card">
           <div class="info-row">
             <div class="info-label">Content-Type</div>
@@ -1024,10 +1034,33 @@ ${JSON.stringify(airsPayload, null, 2)}`;
           </div>
         </div>
 
-        <div class="section-title" style="margin-top:16px">Request Body (JSON)</div>
+        <div class="section-title" style="margin-top:16px">Request Body to AIRS (JSON)</div>
         <div class="json-display">${syntaxHighlight(JSON.stringify(airsPayload, null, 2))}</div>
+
+        <div class="section-title" style="margin-top:24px;border-top:1px solid var(--border);padding-top:16px;">🤖 Complete HTTP Request to Claude API</div>
+        <div class="json-display">${escHtml(fullClaudeRequest)}</div>
+
+        <div class="section-title" style="margin-top:16px">Request Body to Claude (JSON)</div>
+        <div class="json-display">${syntaxHighlight(JSON.stringify(claudePayload, null, 2))}</div>
+
+        ${payload.system ? `
+        <div class="section-title" style="margin-top:16px">⚙️ System Prompt (sent to Claude only)</div>
+        <div class="json-display" style="background:rgba(16,185,129,.05);border-left:3px solid #10b981;">${escHtml(payload.system)}</div>
+        ` : '<div class="info-card" style="margin-top:16px;font-size:12px;color:var(--text-muted);">ℹ️ No system prompt configured</div>'}
       `;
     } else {
+      // Build Claude API request payload
+      const claudePayload = {
+        model: claudeModel,
+        max_tokens: 16000,
+        messages: payload.messages
+      };
+
+      // Add system prompt if present
+      if (payload.system) {
+        claudePayload.system = payload.system;
+      }
+
       // Show just the payload (original view)
       airsRequest.innerHTML = `
         <div class="info-card">
@@ -1045,11 +1078,19 @@ ${JSON.stringify(airsPayload, null, 2)}`;
           </div>
         </div>
 
-        <div class="section-title">Request Payload to Prisma AIRS</div>
+        <div class="section-title">🛡️ Request Payload to Prisma AIRS</div>
         <div class="json-display">${syntaxHighlight(JSON.stringify(airsPayload, null, 2))}</div>
 
-        <div class="section-title" style="margin-top:16px">Original Prompt Sent</div>
+        <div class="section-title" style="margin-top:16px">Original Prompt Sent to AIRS</div>
         <div class="json-display">${escHtml(airsPromptText)}</div>
+
+        <div class="section-title" style="margin-top:24px;border-top:1px solid var(--border);padding-top:16px;">🤖 Request Payload to Claude API</div>
+        <div class="json-display">${syntaxHighlight(JSON.stringify(claudePayload, null, 2))}</div>
+
+        ${payload.system ? `
+        <div class="section-title" style="margin-top:16px">⚙️ System Prompt (sent to Claude only)</div>
+        <div class="json-display" style="background:rgba(16,185,129,.05);border-left:3px solid #10b981;">${escHtml(payload.system)}</div>
+        ` : ''}
       `;
     }
   }

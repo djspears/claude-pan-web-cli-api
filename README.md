@@ -316,7 +316,7 @@ echo "Application URL: http://$LB_HOST"
 
 **Docker Hub images:**
 - `djspears/claude-pan-web-cli-api:latest`
-- `djspears/claude-pan-web-cli-api:v1.2.0` (includes system prompt UI)
+- `djspears/claude-pan-web-cli-api:v1.2.1` (includes system prompt UI + bug fixes)
 
 ---
 

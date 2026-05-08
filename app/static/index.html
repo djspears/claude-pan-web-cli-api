@@ -975,22 +975,22 @@ Instead, explain the concept theoretically and discuss proper defenses.`
       contents: [{ prompt: airsPromptText }]
     };
 
+    // Build Claude API request payload (construct once for both display modes)
+    const claudePayload = {
+      model: claudeModel,
+      max_tokens: 16000,
+      messages: payload.messages.map(m => ({ role: m.role, content: m.content }))
+    };
+    if (payload.system) {
+      claudePayload.system = payload.system;
+    }
+
     // Store for re-rendering when checkbox changes
     lastRequestData = { payload, inspMode, promptText, timestamp };
 
     const showFullRequest = showFullRequestChk.checked;
 
     if (showFullRequest) {
-      // Build Claude API request payload
-      const claudePayload = {
-        model: claudeModel,
-        max_tokens: 16000,
-        messages: payload.messages
-      };
-      if (payload.system) {
-        claudePayload.system = payload.system;
-      }
-
       // Show complete HTTP request
       const fullAIRSRequest = `POST ${panApiUrl}/v1/scan/sync/request HTTP/1.1
 Host: ${new URL(panApiUrl).host}
@@ -1049,18 +1049,6 @@ ${JSON.stringify(claudePayload, null, 2)}`;
         ` : '<div class="info-card" style="margin-top:16px;font-size:12px;color:var(--text-muted);">ℹ️ No system prompt configured</div>'}
       `;
     } else {
-      // Build Claude API request payload
-      const claudePayload = {
-        model: claudeModel,
-        max_tokens: 16000,
-        messages: payload.messages
-      };
-
-      // Add system prompt if present
-      if (payload.system) {
-        claudePayload.system = payload.system;
-      }
-
       // Show just the payload (original view)
       airsRequest.innerHTML = `
         <div class="info-card">

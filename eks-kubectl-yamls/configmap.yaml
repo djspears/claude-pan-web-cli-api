@@ -5,7 +5,7 @@ metadata:
   namespace: claude-pan-airs
 data:
   PAN_API_URL: "https://service.api.aisecurity.paloaltonetworks.com"
-  PAN_APP_NAME: "web-chatbot"
+  PAN_APP_NAME: "EKS-Chatbot"
   PAN_TIMEOUT: "10"
   PAN_SCAN_RESPONSES: "false"
   PAN_ENABLED: "true"

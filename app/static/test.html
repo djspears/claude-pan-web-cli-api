@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Simple Test</title>
+</head>
+<body>
+  <h1>Simple Chat Test</h1>
+  <input type="text" id="input" placeholder="Type message" style="width: 300px; padding: 8px;">
+  <button id="send" style="padding: 8px 16px;">Send</button>
+  <div id="output" style="margin-top: 20px; font-family: monospace;"></div>
+
+  <script>
+    const input = document.getElementById('input');
+    const sendBtn = document.getElementById('send');
+    const output = document.getElementById('output');
+
+    sendBtn.addEventListener('click', async () => {
+      const text = input.value.trim();
+      if (!text) return;
+
+      output.innerHTML += '<p>Sending: ' + text + '</p>';
+
+      try {
+        const res = await fetch('/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: [{ role: 'user', content: text }],
+            pan_inspect_mode: 'prompt_only'
+          })
+        });
+
+        const data = await res.json();
+        output.innerHTML += '<p style="color: green;">Response: ' + data.response + '</p>';
+        output.innerHTML += '<p style="color: blue;">PAN Verdict: ' + data.pan.verdict + '</p>';
+      } catch (err) {
+        output.innerHTML += '<p style="color: red;">Error: ' + err.message + '</p>';
+      }
+    });
+  </script>
+</body>
+</html>
